@@ -1,0 +1,2 @@
+BINARIES = fork_exec posix_spawn
+include ../../../../../common/multiple.mk
