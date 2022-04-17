@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from threading import Thread
 from os import getpid, getppid
 from time import sleep
+from threading import Thread
 
 def thread(msg):
     print(f'[thread] PID = {getpid()}; PPID = {getppid()}')

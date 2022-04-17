@@ -1,3 +1,0 @@
-BINARY = barrier
-LDFLAGS = -lpthread
-include ../../../../../common/single.mk

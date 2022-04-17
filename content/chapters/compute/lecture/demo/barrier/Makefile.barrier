@@ -1,4 +1,0 @@
-BINARY = barrier
-CFLAGS = -g -Wall -Wextra -Werror -I ../utils -D USE_BARRIER
-LDFLAGS = -lpthread
-include ../../../../../common/single.mk
