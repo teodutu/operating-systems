@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__Unikraft__)
 #define DIE(assertion, call_description)			\
 	do {							\
 		if (assertion) {				\

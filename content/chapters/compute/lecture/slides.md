@@ -9,10 +9,10 @@ revealOptions:
 
 # COMPUTE
 
-* [Processes](#processes)
-* [Threads](#threads)
-* [Scheduling](#scheduling---why)
-* [Synchronization](#synchronization---why)
+1. [Processes](#1-processes)
+1. [Threads](#2-threads)
+1. [Scheduling](#3-scheduling)
+1. [Synchronization](#4-synchronization)
 
 ---
 
@@ -43,9 +43,9 @@ Only one CPU. How?
 ### All Processes in a System
 
 ```
-student@os ~ $ ps -e | wc -l
+student@os:~$ ps -e | wc -l
 32
-student@os ~ $ ps -e
+student@os:~$ ps -e
   PID TTY          TIME CMD
     1 ?        00:00:00 init
   914 ?        00:00:00 init
@@ -83,7 +83,7 @@ Way more processes than cores!
 
 ---
 
-### Processes
+### 1. Processes
 
 * A process is a **running program**
 * An application can spawn multiple processes
@@ -139,7 +139,7 @@ Way more processes than cores!
 * State: we will discuss this later
 
 ```
-student@os create-thread $ python3 create_thread.py
+student@os:~/.../compute/lecture/demo/create-thread$ python3 create_process.py
 [main] PID = 16066; PPID = 7820
 [thread] PID = 16066; PPID = 7820
 ```
@@ -150,7 +150,7 @@ student@os create-thread $ python3 create_thread.py
 
 `ps`:
 ```
-student@os ~ $ ps -e --forest -o pid,ppid,rss,vsz,etime,stat,comm
+student@os:~$ ps -e --forest -o pid,ppid,rss,vsz,etime,stat,comm
   PID  PPID   RSS    VSZ     ELAPSED STAT COMMAND
     1     0   600    988  2-02:44:02 Sl   init
   914     1    88    900  2-02:14:06 S    init
@@ -240,8 +240,8 @@ struct task_struct {
 * Returns twice
     * `0` in child process
     * Child's PID in parent process
-* Initially child and parent share the same PAS
-* Child's writable pages marked **copy-on-write**
+* Initially child and parent share the same PAS (Physical Address Space)
+* Child's writable pages are marked **copy-on-write**
 
 ----
 
@@ -261,7 +261,7 @@ When `fork` returns, the child inherits the parent's page table.
 
 ---
 
-### Threads
+### 2. Threads
 
 * Each process has at least one thread
 * Lightweight processes (LWP)
@@ -283,14 +283,13 @@ When `fork` returns, the child inherits the parent's page table.
 
 ### Process vs Thread
 
-| Process                          | Thread                               |
-| :------------------------------: | :----------------------------------: |
+| PROCESS                          | THREAD                               |
+| :------------------------------- | :----------------------------------- |
 | independent                      | part of a process                    |
-| isolated VAS                     | share VAS with other threads         |
-| expensive creation               | faster creation                      |
-| costly context switch            | shorter context switch               |
-| all threads closed when finished | other threads continue when finished |
-| Linux syscall: `clone()`         | Linux syscall: `clone()`             |
+| isolated VAS                     | shares VAS with other threads        |
+| slower creation                  | faster creation                      |
+| slower context switch            | shorter context switch               |
+| ending means ending all threads  | other threads continue when finished |
 
 ----
 
@@ -303,6 +302,10 @@ vs
 `demo/create-process/create_process.py`
 
 ---
+
+## 3. Scheduling
+
+----
 
 ### Scheduling - Why?
 
@@ -364,7 +367,7 @@ A more detailed diagram is [here](#the-suspended-states)
 
 * `demo/context-switch/cpu_bound.c`:
 ```
-student@os ~ $ cat /proc/$(pidof cpu_bound)/status
+student@os:~$ cat /proc/$(pidof cpu_bound)/status
 [...]
 voluntary_ctxt_switches:        13
 nonvoluntary_ctxt_switches:     7
@@ -372,7 +375,7 @@ nonvoluntary_ctxt_switches:     7
 
 * `demo/context-switch/io_bound.c`:
 ```
-student@os ~ $ cat /proc/$(pidof io_bound)/status
+student@os:~$ cat /proc/$(pidof io_bound)/status
 [...]
 voluntary_ctxt_switches:        3729
 nonvoluntary_ctxt_switches:     3
@@ -456,9 +459,9 @@ nonvoluntary_ctxt_switches:     3
     * low throughput
     * high fairness 
 
-----
+---
 
-## Round-Robin - Real Life (Unikraft)
+### Round-Robin - Real Life (Unikraft)
 
 * [Cooperative scheduler](https://github.com/unikraft/unikraft/blob/staging/lib/ukschedcoop/schedcoop.c)
 * Lists used as queues for READY and WAITING processes:
@@ -474,6 +477,41 @@ static void schedcoop_yield(struct uk_sched *s)
 {
 	schedcoop_schedule(s);
 }
+```
+
+----
+
+### Cooperative Scheduler - Demo
+
+* First, run `setup.sh`
+* Without calling `uk_sched_yield`, Thread 1 runs until finished:
+
+``` [1 - 12 | 14 - 25]
+student@os:~/.../compute/lecture/demo/cooperative-scheduling$ ./run.sh
+[...]
+Thread 1 created!
+Thread 1: step 0
+Thread 1: step 1
+Thread 1: step 2
+Thread 1 finished!
+Thread 2 created!
+Thread 2: step 0
+Thread 2: step 1
+Thread 2: step 2
+Thread 2 finished!
+
+student@os:~/.../compute/lecture/demo/cooperative-scheduling$ ./run.sh --cooperate
+[...]
+Thread 1 created!
+Thread 1: step 0
+Thread 2 created!
+Thread 2: step 0
+Thread 1: step 1
+Thread 2: step 1
+Thread 1: step 2
+Thread 2: step 2
+Thread 1 finished!
+Thread 2 finished!
 ```
 
 ---
@@ -514,18 +552,18 @@ static void schedcoop_yield(struct uk_sched *s)
 * Lower `nice`-ness = higher priority
 * Values in `[-20, 19]`
 
-```bash [1 - 2 | 3 - 8 | 9 - 10 | 11 - 12]
-student@os ~ $ nice -10 bash &
+``` [1 - 2 | 3 - 8 | 9 - 10 | 11 - 12]
+student@os:~$ nice -10 bash &
 [1] 5753
-student@os ~ $ ps -e -o pid,ni,comm
+student@os:~$ ps -e -o pid,ni,comm
   PID  NI COMMAND
     1   0 init
  [...]
  5753  10 bash
  5752   0 ps
-student@os ~  $ sudo renice -n -20 -p 5753
+student@os:~$ sudo renice -n -20 -p 5753
 5753 (process ID) old priority 10, new priority -20
-student@os ~ $ ps -e -o pid,ni,comm | grep 5753
+student@os:~$ ps -e -o pid,ni,comm | grep 5753
  5753 -20 bash
 ```
 
@@ -550,6 +588,10 @@ student@os ~ $ ps -e -o pid,ni,comm | grep 5753
     * Increase priority of WAITING threads
 
 ---
+
+## 4. Synchronization
+
+----
 
 ### Synchronization - Why?
 
@@ -706,13 +748,13 @@ void mutex_unlock(struct mutex *m)
 * The more complex the synchronization mechanism, the higher the overhead:
 
 ``` [1 - 2 | 3 - 4 | 5 - 6 | 7 - 8]
-student@os race-condition $ ./race_condition
+student@os:~/.../compute/lecture/demo/race-condition$ ./race_condition
 var = 1232611; time = 14 ms
-student@os race-condition $ ./race_condition_atomic
+student@os:~/.../compute/lecture/demo/race-condition$ ./race_condition_atomic
 var = 2000000; time = 31 ms
-student@os race-condition $ ./race_condition_spinlock
+student@os:~/.../compute/lecture/demo/race-condition$ ./race_condition_spinlock
 var = 2000000; time = 73 ms
-student@os race-condition $ ./race_condition_mutex
+student@os:~/.../compute/lecture/demo/race-condition$ ./race_condition_mutex
 var = 2000000; time = 98 ms
 ```
 
@@ -729,9 +771,9 @@ var = 2000000; time = 98 ms
 * Large critical sections mean less parallelism (code runs almost sequentially)
 
 ```
-student@os granularity $ ./coarse_granularity
+student@os:~/.../compute/lecture/demo/granularity$ ./coarse_granularity
 var = 2000000; time = 36 ms
-student@os granularity $ ./fine_granularity
+student@os:~/.../compute/lecture/demo/granularity$ ./fine_granularity
 var = 2000000; time = 1268 ms
 ```
 
@@ -766,7 +808,7 @@ var = 2000000; time = 1268 ms
 ![Deadlock](media/deadlock.svg)
 
 ```
-student@os deadlock $ ./deadlock
+student@os:~/.../compute/lecture/demo/deadlock$ python3 deadlock.py
 Thread 1: locked resource 1. Waiting for resource 2...
 Thread 2: locked resource 2. Waiting for resource 1...
 
@@ -781,7 +823,30 @@ Thread 2: locked resource 2. Waiting for resource 1...
 * The code before the barrier is executed by **all threads** before the code after the barrier
 * Threads move to WAITING upon reaching the barrier
 * Threads move back to READY when the last thread reaches the barrier
-* `demo/barrier/barrier.c`
+
+----
+
+### Barrier - Demo
+
+```[1 - 7 | 9 - 16]
+student@os:~/.../compute/lecture/demo/barrier$ python3 barrier.py
+Before barrier: thread name = thread-0
+After barrier: thread name = thread-0
+Before barrier: thread name = thread-2
+After barrier: thread name = thread-2
+Before barrier: thread name = thread-1
+After barrier: thread name = thread-1
+
+student@os:~/.../compute/lecture/demo/barrier$ python3 barrier.py --use-barrier
+Before barrier: thread name = thread-0
+Before barrier: thread name = thread-1
+Before barrier: thread name = thread-2
+After barrier: thread name = thread-2
+After barrier: thread name = thread-0
+After barrier: thread name = thread-1
+```
+
+* Notice that threads reach the barrier and end in arbitrary order
 
 ---
 
@@ -797,16 +862,30 @@ Thread 2: locked resource 2. Waiting for resource 1...
 ### Condition Variables - API
 
 * `wait`: suspend the thread until the condition is met
-    * used in a loop:
-```c
-while (!condition) {
-		/* The mutex is automatically unlocked before waiting. */
-		wait(&condition, &mutex);
-}
+    * need to acquire the lock before waiting
+    * this is needed to check the condition in a thread-safe manner
+    * `wait` releases the lock
+```python
+cond.acquire()
+cond.wait()
 ```
-* `signal`: wake up **one** thread waiting on the condition
-* `broadcast`: wake up **all** threads waiting on the condition
-* `demo/condition/cond_barrier.c`
+* `notify`: wake up **one** thread waiting on the condition
+* `notify_all`: wake up **all** threads waiting on the condition
+
+----
+
+### Condition Variables - Demo
+
+```
+student@os:~/.../compute/lecture/demo/condition$ python3 condition.py
+Waiting thread: waiting for main thread...
+Main thread: type "notify" to notify waiting thread
+
+waiting thread is sleeping until woken up by main thread
+
+notify
+Waiting thread: notified by main thread
+```
 
 ---
 
@@ -834,7 +913,7 @@ Follow the code in `demo/create-process/fork_exec.c`
 ### Linux Syscalls
 
 ```
-student@os create-process $ strace ./fork_exec
+student@os:~/.../compute/lecture/demo/create-process$ strace ./fork_exec
 [...]
 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7e83aa4810) = 5279
 [...]
@@ -846,9 +925,9 @@ clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, c
 ### `fork` vs `pthread_create`
 
 ``` [1 - 2 | 3 - 4]
-student@os create-process $ strace -e clone ./fork_exec
+student@os:~/.../compute/lecture/demo/create-process$ strace -e clone ./fork_exec
 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7e83aa4810) = 5302
-student@os create-thread $ strace -e clone ./create_thread
+student@os:~/.../compute/lecture/demo/create-thread$ strace -e clone ./create_thread
 clone(child_stack=0x7f9ea7df0fb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, tls=0x7f9ea7df1700, child_tidptr=0x7f9ea7df19d0) = 5389
 ```
 * From the flags, the parent and the child **thread** share:
