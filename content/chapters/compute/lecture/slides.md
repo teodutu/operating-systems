@@ -259,6 +259,31 @@ When `fork` returns, the child inherits the parent's page table.
 
 ![Copy-on-write after Write](./media/copy-on-write-final.svg)
 
+----
+
+### Copy-on-write Overheard
+
+* The overhead from writing data comes mostly from minor page faults
+```
+student@os:~/.../compute/lecture/demo/copy-on-write$ ./copy_on_write_overhead 
+ * Child prcess started
+ -- Press ENTER to continue ...
+Time for reading 131072 pages: 30 ms
+ * Child process read pages
+ -- Press ENTER to continue ...
+Time for writing to 131072 pages: 222 ms
+[...]
+```
+
+* The child process performs exactly 131072 **minor** page faults when writing data
+```
+student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10
+22 0
+
+student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10
+131094 0
+```
+
 ---
 
 ### 2. Threads
@@ -617,7 +642,7 @@ student@os:~$ ps -e -o pid,ni,comm | grep 5753
 * `demo/race-condition/race_condition.c`
 * `var++` equivalency (**critical section**):
 
-<video controls>
+<video width=509 controls>
     <source src="media/race-condition.mp4" type="video/mp4">
 </video>
 
@@ -635,7 +660,7 @@ if (lock = 0) {
 }
 ```
 
-<video controls>
+<video width=509 controls>
     <source src="media/race-condition-toctou.mp4" type="video/mp4">
 </video>
 
@@ -647,7 +672,7 @@ if (lock = 0) {
 
 * Only allow **one thread** to access the critical section at a given time (mutual exclusion)
 
-<video controls>
+<video width=509 controls>
     <source src="media/race-condition-lock.mp4" type="video/mp4">
 </video>
 

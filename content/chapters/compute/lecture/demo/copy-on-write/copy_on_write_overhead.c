@@ -12,6 +12,16 @@
 
 #define NPAGES		(128 * 1024)
 
+static void wait_for_input(const char *msg)
+{
+	char buf[32];
+
+	printf(" * %s\n", msg);
+	printf(" -- Press ENTER to continue ...");
+	fflush(stdout);
+	fgets(buf, 32, stdin);
+}
+
 int main(void)
 {
 	pid_t pid;
@@ -36,6 +46,8 @@ int main(void)
 		break;
 
 	case 0:		/* Child process */
+		wait_for_input("Child prcess started");
+
 		/* Measure the time spent reading. No COW. */
 		millis_start = get_current_millis();
 
@@ -46,6 +58,8 @@ int main(void)
 
 		printf("Time for reading %d pages: %lu ms\n", NPAGES,
 			millis_end - millis_start);
+
+		wait_for_input("Child process read pages");
 
 		/* Measure the time spent writing. COW is performed. */
 		millis_start = get_current_millis();
@@ -58,7 +72,9 @@ int main(void)
 		printf("Time for writing to %d pages: %lu ms\n", NPAGES,
 			millis_end - millis_start);
 
-		break;
+		wait_for_input("Child process wrote pages");
+
+		exit(EXIT_SUCCESS);
 
 	default:	/* Parent process */
 		rc = waitpid(pid, NULL, 0);
@@ -66,6 +82,7 @@ int main(void)
 		break;
 	}
 
+	wait_for_input("Parent process ending");
 
 	return 0;
 }
