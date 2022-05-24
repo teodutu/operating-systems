@@ -1,3 +1,3 @@
 BINARY = race_condition
-LDFLAGS = -lpthread
+LDLIBS = -lpthread
 include ../../../../../common/single.mk

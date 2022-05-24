@@ -1,3 +1,3 @@
 BINARY = create_thread
-LDFLAGS = -lpthread
+LDLIBS = -lpthread
 include ../../../../../common/single.mk
