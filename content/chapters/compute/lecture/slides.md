@@ -740,6 +740,7 @@ void mutex_unlock(struct mutex *m)
 * Prevents overhead from busy-waiting
 * Threads move to WAITING state while waiting for the lock
 * Introduces overhead from context switch
+* Releasing a mutex held by another thread is [**undefinded behaviour**](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_mutex_lock.html)
 
 ---
 
@@ -777,9 +778,33 @@ student@os:~/.../compute/lecture/demo/granularity$ ./fine_granularity
 var = 2000000; time = 1268 ms
 ```
 
+----
+
+## Who Should Release the Lock?
+
+![Locks vs Notifications](./media/lock-undefined-behaviour.svg)
+
 ---
 
-## Semaphore
+## Locks vs Notifications
+
+![Lock vs Notification](./media/lock-vs-notify.svg)
+
+----
+
+## Locks vs Notifications
+
+* Locks:
+    * isolate **critical sections**
+    * thread that calls `unlock()` must hold the lock
+
+* Notifications (conditions and semaphores):
+    * one thread waits for an **event**
+    * **another thread** notifies waiting thread on event completion
+
+----
+
+### Semaphore
 
 * Generalized mutex (mutex = binary semaphore)
 * Lock can take values greater than 1
