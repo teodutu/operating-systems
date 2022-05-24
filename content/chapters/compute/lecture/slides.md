@@ -10,7 +10,7 @@ revealOptions:
 # COMPUTE
 
 1. [Processes](#1-processes)
-1. [Threads](#2-threads)
+1. [Threads](#2-threads---backstory)
 1. [Scheduling](#3-scheduling)
 1. [Synchronization](#4-synchronization)
 
@@ -83,7 +83,7 @@ Way more processes than cores!
 
 ---
 
-### 1. Processes
+## 1. Processes
 
 * A process is a **running program**
 * An application can spawn multiple processes
@@ -277,16 +277,26 @@ Time for writing to 131072 pages: 222 ms
 
 * The child process performs exactly 131072 **minor** page faults when writing data
 ```
-student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10
-22 0
+student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10  # before writing
+22
 
-student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10
-131094 0
+student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10  # after writing
+131094
 ```
 
 ---
 
-### 2. Threads
+## 2. Threads - Backstory
+
+* You have an application that applies filters to a set of images
+* Processes need to share all images
+    * Difficult because the images (like all data) are marked copy-on-write
+* **Solution:** use threads
+    * No copy-on-write: threads share the heap and data sections
+
+----
+
+### 2. Threads - Definitions
 
 * Each process has at least one thread
 * Lightweight processes (LWP)
@@ -442,6 +452,19 @@ nonvoluntary_ctxt_switches:     3
 * **Preemptive:** also allows involuntary context switches
     * Each process can run at most a certain _time slice_ / _quantum_
     * When it expires, a context switch is triggered
+
+----
+
+### Scheduling Algorithms - The Bigger Picture
+
+* **Round-Robin**:
+    * Push each new thread to a queue
+    * Every time slice, dequeue one thread, run it, then reenqueue it
+    * Threads run in the order in which they're spawned
+* **Completely Fair Scheduler (CFS)**:
+    * Push each new thread to a red-black tree sorted by total running time
+    * Every time slice, remove the thread that has run the least, run it, then add it back to the RB tree
+    * Each thread runs approximately the same amount of time
 
 ---
 
@@ -951,15 +974,6 @@ Follow the code in `demo/create-process/fork_exec.c`
 
 ----
 
-### Linux vs Windows
-
-* Go to `demo/create-process` and compare:
-    * `fork_exec.c`
-    * `posix_spawn.c`
-    * `create_process.c`
-
----
-
 ### Linux Syscalls
 
 ```
@@ -971,6 +985,64 @@ clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, c
 * `fork` and `pthread_create` are `libc` wrappers to the same syscall: `clone`
 
 ----
+
+### Libc vs Linux vs Windows
+
+* Libc approach - `system`:
+
+``` [1 | 2 | 3 | 5 | 7 | 9]
+student@os:~/.../compute/lecture/demo/create-process$ strace -ff -e clone,execve ./system
+execve("./system", ["./system"], 0x7ffff3f20008 /* 60 vars */) = 0
+clone(child_stack=0x7f3fa624aff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLDstrace: Process 117770 attached
+ <unfinished ...>
+[pid 117770] execve("/bin/sh", ["sh", "-c", "ls -la"], 0x7ffdac7acfe8 /* 60 vars */ 
+[...]
+[pid 117770] clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f9292b28850) = 117771
+strace: Process 117771 attached
+[pid 117771] execve("/usr/bin/ls", ["ls", "-la"], 0x55c700084048 /* 60 vars */) = 0
+[...]
+```
+
+* `system` first creates a new shell (`execve("/bin/sh"`)
+* This shell now spawns `ls -la` (`execve("/usr/bin/ls", ["ls", "-la"]`)
+
+----
+
+### Libc vs Linux vs Windows
+
+* Linux approach - `posix_spawn` and `fork` + `exec`:
+
+``` [1 | 2 | 3 | 5 | 7 | 8 | 9 | 11 | 13]
+student@os:~/.../compute/lecture/demo/create-process$ strace -ff -e clone,execve ./posix_spawn
+execve("./posix_spawn", ["./posix_spawn"], 0x7ffcfed53928 /* 60 vars */) = 0
+clone(child_stack=0x7f842691eff0, flags=CLONE_VM|CLONE_VFORK|SIGCHLDstrace: Process 118949 attached
+ <unfinished ...>
+[pid 118949] execve("/bin/ls", ["-la"], 0x7ffc97832878 /* 60 vars */ <unfinished ...>
+
+student@os:~/.../compute/lecture/demo/create-process$ strace -ff -e clone,execve ./fork_exec
+execve("./fork_exec", ["./fork_exec"], 0x7ffdb2c85028 /* 60 vars */) = 0
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLDstrace: Process 119051 attached
+[...]
+[pid 119051] execve("/home/teo/.local/bin/ls", ["-la"], 0x7ffee90fee78 /* 60 vars */) = -1
+[...]
+[pid 119051] execve("/usr/bin/ls", ["-la"], 0x7ffee90fee78 /* 60 vars */) = 0
+```
+
+* The "manual" method (`fork` + `exec`) tries all `$PATH` entries before finding `"/usr/bin/ls"`
+
+----
+
+### Libc vs Linux vs Windows
+
+* Windows approach: `CreateProcess`
+
+```
+TODO
+```
+
+* The command given to `CreateProcess` must specify the interpreter: `cmd`
+
+---
 
 ### `fork` vs `pthread_create`
 
