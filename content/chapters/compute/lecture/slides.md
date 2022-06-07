@@ -314,6 +314,15 @@ student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10 
 
 ![Application Architecture](media/app-process-thread.svg)
 
+----
+
+### `fork` and Threads
+
+* `fork` also creates a new thread...
+* ... but part of a different process
+
+![fork - new Thread](./media/fork-thread.svg)
+
 ---
 
 ### Process vs Thread
@@ -966,11 +975,27 @@ Waiting thread: notified by main thread
 
 ---
 
-### `fork` and `exec`
+### Create a new process - `exec`
+
+* What happens when we type:
+```bash
+student@os:~$ ls
+```
+
+* What if the shell simply calls `exec("/bin/ls")`?
+
+![Exec without Fork](./media/exec.svg)
+
+* When `ls` ends, the shell ends too
+
+----
+
+### Create a new process - `fork` + `exec`
+
+* "Save" the shell before calling `exec("/bin/ls")`
+* Use `fork` and only the child calls `exec`
 
 ![Fork and Exec Diagram](media/fork-exec.svg)
-
-Follow the code in `demo/create-process/fork_exec.c`
 
 ----
 
