@@ -971,6 +971,53 @@ Waiting thread: notified by main thread
 
 ---
 
+### Thread-safety and Reentrancy
+
+* **Thread-safe function:** can be called simultaneously from multiple threads without race conditions
+* **Reentrant function:** can be preempted at any time and called from the same thread
+    * Different from recursion:
+
+![Recursion vs reentrancy](./media/recursive-vs-reentrant.svg)
+
+----
+
+### Thread-safety and Reentrancy - Examples
+
+```c [1 - 8 | 10 - 16 | 18 - 24 | 26 - 30]
+/* Not thread-safe, not reentrant: */
+int tmp
+int add2(int x)
+{
+    tmp = a;
+    /* Preempt here */
+    return tmp + 2;
+}
+
+/* Reentrant, not thread-safe: */
+int tmp
+int add2(int x)
+{
+    tmp = a;
+    return a + 2;
+}
+
+/* Thread-safe not reentrant: */
+thread_local int tmp
+int add2(int x)
+{
+    tmp = a;
+    return tmp + 2;
+}
+
+/* Both thread-safe and reentrant: */
+int add2(int x)
+{
+    return a + 2;
+}
+```
+
+---
+
 ## Cool Extra Stuff
 
 ---
