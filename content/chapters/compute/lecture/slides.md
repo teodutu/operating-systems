@@ -45,6 +45,7 @@ Only one CPU. How?
 ```
 student@os:~$ ps -e | wc -l
 32
+
 student@os:~$ ps -e
   PID TTY          TIME CMD
     1 ?        00:00:00 init
@@ -240,6 +241,7 @@ struct task_struct {
 * Returns twice
     * `0` in child process
     * Child's PID in parent process
+[Quiz](./quiz/process-creation.md)
 * Initially child and parent share the same PAS (Physical Address Space)
 * Child's writable pages are marked **copy-on-write**
 
@@ -256,6 +258,7 @@ When `fork` returns, the child inherits the parent's page table.
 ### Copy-on-write
 
 * Writable pages are **copied and modified** when written: `demo/copy-on-write/copy_on_write_overhead.c`.
+* [Quiz](./quiz/sections-always-shared.md)
 
 ![Copy-on-write after Write](./media/copy-on-write-final.svg)
 
@@ -311,6 +314,8 @@ student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10 
 ----
 
 ### App, Process, Thread - The Bigger Picture
+
+* [Quiz](./quiz/threads-shared-data.md)
 
 ![Application Architecture](media/app-process-thread.svg)
 
@@ -368,7 +373,8 @@ vs
 ### Thread States
 
 * At most one RUNNING thread per core
-* Queues for BLOCKED and READY processes
+* Queues for BLOCKED and READY threads
+* [Quiz](./quiz/number-of-running-threads.md)
 
 ![Thread State Diagram](media/thread-states.svg)
 
@@ -709,6 +715,7 @@ if (lock = 0) {
 </video>
 
 * In the end `var` is **always** 2
+* [Quiz](./quiz/not-race-condition.md)
 
 ---
 
@@ -1022,23 +1029,9 @@ int add2(int x)
 
 ---
 
-### Create a new process - `exec`
-
-* What happens when we type:
-```bash
-student@os:~$ ls
-```
-
-* What if the shell simply calls `exec("/bin/ls")`?
-
-![Exec without Fork](./media/exec.svg)
-
-* When `ls` ends, the shell ends too
-
-----
-
 ### Create a new process - `fork` + `exec`
 
+* [Quiz](./quiz/exec-without-fork.md)
 * "Save" the shell before calling `exec("/bin/ls")`
 * Use `fork` and only the child calls `exec`
 
@@ -1109,7 +1102,9 @@ clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLDstr
 * Windows approach: `CreateProcess`
 
 ```
-TODO
+PS C:\...\lecture\demo\create-process> .\create_process.exe
+[parent] PID = 11876; child PID = 10376; Waiting...
+[...]
 ```
 
 * The command given to `CreateProcess` must specify the interpreter: `cmd`
