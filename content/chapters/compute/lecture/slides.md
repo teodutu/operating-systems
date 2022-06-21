@@ -507,9 +507,7 @@ nonvoluntary_ctxt_switches:     3
 
 ### Round-Robin - Live Scheduling
 
-<video width="590" controls>
-    <source src="media/round-robin.mp4" type="video/mp4">
-</video>
+![Round-Robin Scheduling](./media/round-robin-generated.gif)
 
 ----
 
@@ -680,9 +678,7 @@ student@os:~$ ps -e -o pid,ni,comm | grep 5753
 * `demo/race-condition/race_condition.c`
 * `var++` equivalency (**critical section**):
 
-<video width=509 controls>
-    <source src="media/race-condition.mp4" type="video/mp4">
-</video>
+![Race Condition - Instructions](./media/race-condition-generated.gif)
 
 * In the end `var = 1` or `var = 2`
 
@@ -698,11 +694,10 @@ if (lock = 0) {
 }
 ```
 
-<video width=509 controls>
-    <source src="media/race-condition-toctou.mp4" type="video/mp4">
-</video>
+![Race Condition - TOCTOU](./media/race-condition-toctou-generated.gif)
 
-* **Wrong:** both threads execute the critical section at the same time
+
+* **Wrong:** threads enter critical section simultaneously
 
 ----
 
@@ -710,9 +705,7 @@ if (lock = 0) {
 
 * Only allow **one thread** to access the critical section at a given time (mutual exclusion)
 
-<video width=509 controls>
-    <source src="media/race-condition-lock.mp4" type="video/mp4">
-</video>
+![Race Condition - Using a lock](./media/race-condition-lock-generated.gif)
 
 * In the end `var` is **always** 2
 * [Quiz](./quiz/not-race-condition.md)

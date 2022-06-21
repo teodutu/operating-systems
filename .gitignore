@@ -53,3 +53,6 @@ dkms.conf
 
 # reveal-md slides output folder
 _site/
+
+# .gif files generated with ffmpeg
+*-generated.gif
