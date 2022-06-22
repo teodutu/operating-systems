@@ -1,6 +1,6 @@
 ## Question Text
 
-What is the maximum number of threads can be in the RUNNING state at any time?
+What is the maximum number of threads that can be in the RUNNING state at any time?
 
 ## Question Answers
 
@@ -11,5 +11,5 @@ What is the maximum number of threads can be in the RUNNING state at any time?
 
 ## Feedback
 
-A RUNNING thread needs a CPU core on wich to run.
-Therefore, we cannot have more threads in the RUNNING states than the number of CPU cores.
+A RUNNING thread needs a CPU core on which to run.
+Therefore, we cannot have more threads in the RUNNING state than the number of CPU cores.

@@ -12,6 +12,6 @@ The pages of which sections in the process virtual address space are **always** 
 ## Feedback
 
 The name of the mechanism is copy-on-**write**.
-Pages oare only copied when written to.
+Pages are only copied when written to.
 If you never write data to a page, it will remain shared.
 You cannot write data to non-writable pages, such as those in the `.text` or `.rodata` sections.

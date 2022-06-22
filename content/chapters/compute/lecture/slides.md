@@ -87,9 +87,11 @@ Way more processes than cores!
 ## 1. Processes
 
 * A process is a **running program**
+    * It is a collection of resources/abstractions (Memory, CPU, I/O)
 * An application can spawn multiple processes
-* The OS allows each process to run on a **core** for a few milliseconds (time slice)
-* Then the OS pauses the process and replaces it with another one (context switch)
+* The OS allows each thread to run on a **core** for a few milliseconds (time slice)
+    * See [section 4](#2-threads---backstory) for details regarding threads
+* Then the OS pauses the thread and replaces it with another one (context switch)
 
 ----
 
@@ -266,10 +268,11 @@ When `fork` returns, the child inherits the parent's page table.
 
 ### Copy-on-write Overheard
 
-* The overhead from writing data comes mostly from minor page faults
+* Writes cause minor page faults
+
 ```
 student@os:~/.../compute/lecture/demo/copy-on-write$ ./copy_on_write_overhead 
- * Child prcess started
+ * Child process started
  -- Press ENTER to continue ...
 Time for reading 131072 pages: 30 ms
  * Child process read pages
@@ -279,10 +282,10 @@ Time for writing to 131072 pages: 222 ms
 ```
 
 * The child process performs exactly 131072 **minor** page faults when writing data
+
 ```
 student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10  # before writing
 22
-
 student@os:~$ cat /proc/$(pidof copy_on_write_overhead)/stat | cut -d ' ' -f 10  # after writing
 131094
 ```
@@ -437,7 +440,7 @@ nonvoluntary_ctxt_switches:     3
 
 * Causes of overhead:
     * running the scheduler itself
-    * flushing the TLB of the evicted thread
+    * after flushing the TLB of the evicted thread, the new thread starts with an empty TLB
 * Faster context switches between threads of the same process because their TLB is not flushed
 
 ---
@@ -477,8 +480,8 @@ nonvoluntary_ctxt_switches:     3
     * Every time slice, dequeue one thread, run it, then reenqueue it
     * Threads run in the order in which they're spawned
 * **Completely Fair Scheduler (CFS)**:
-    * Push each new thread to a red-black tree sorted by total running time
-    * Every time slice, remove the thread that has run the least, run it, then add it back to the RB tree
+    * Add new threads to a red-black tree sorted by total running time
+    * Every time slice, remove, run and add the thread that has run the least back to the tree
     * Each thread runs approximately the same amount of time
 
 ---
@@ -973,8 +976,8 @@ Waiting thread: notified by main thread
 
 ### Thread-safety and Reentrancy
 
-* **Thread-safe function:** can be called simultaneously from multiple threads without race conditions
-* **Reentrant function:** can be preempted at any time and called from the same thread
+* **Thread-safe function:** called simultaneously from multiple threads without race conditions
+* **Reentrant function:** preempted at any time and re-called from the same thread with the same effects
     * Different from recursion:
 
 ![Recursion vs reentrancy](./media/recursive-vs-reentrant.svg)
@@ -988,7 +991,7 @@ Waiting thread: notified by main thread
 int tmp
 int add2(int x)
 {
-    tmp = a;
+    tmp = x;
     /* Preempt here */
     return tmp + 2;
 }
@@ -997,7 +1000,7 @@ int add2(int x)
 int tmp
 int add2(int x)
 {
-    tmp = a;
+    tmp = x;
     return a + 2;
 }
 
@@ -1005,14 +1008,14 @@ int add2(int x)
 thread_local int tmp
 int add2(int x)
 {
-    tmp = a;
+    tmp = x;
     return tmp + 2;
 }
 
 /* Both thread-safe and reentrant: */
 int add2(int x)
 {
-    return a + 2;
+    return x + 2;
 }
 ```
 
@@ -1081,7 +1084,7 @@ student@os:~/.../compute/lecture/demo/create-process$ strace -ff -e clone,execve
 execve("./fork_exec", ["./fork_exec"], 0x7ffdb2c85028 /* 60 vars */) = 0
 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLDstrace: Process 119051 attached
 [...]
-[pid 119051] execve("/home/teo/.local/bin/ls", ["-la"], 0x7ffee90fee78 /* 60 vars */) = -1
+[pid 119051] execve("/home/student/.local/bin/ls", ["-la"], 0x7ffee90fee78 /* 60 vars */) = -1
 [...]
 [pid 119051] execve("/usr/bin/ls", ["-la"], 0x7ffee90fee78 /* 60 vars */) = 0
 ```
@@ -1135,7 +1138,7 @@ clone(child_stack=0x7f9ea7df0fb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGH
 
 ---
 
-### User Level Threads
+### Kernel Level Threads
 
 * Advantages:
     * blocking actions only stall current thread
@@ -1144,6 +1147,7 @@ clone(child_stack=0x7f9ea7df0fb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGH
     * slow context switch
     * difficult to implement and maintain
     * kernel space scheduler (more complex)
+    * Partial solution: **user level threads**
 
 ----
 

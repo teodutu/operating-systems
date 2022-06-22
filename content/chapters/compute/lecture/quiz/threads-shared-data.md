@@ -11,6 +11,6 @@ Which section may store per-thread variables, i.e. non-shared variables?
 
 ## Feedback
 
-Each thread as its own separate stack.
+Each thread has its own separate stack.
 Every other section is shared with the other threads.
 Data can also be stored in the `.text` section, albeit this is a bit unorthodox.

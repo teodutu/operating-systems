@@ -46,7 +46,7 @@ int main(void)
 		break;
 
 	case 0:		/* Child process */
-		wait_for_input("Child prcess started");
+		wait_for_input("Child process started");
 
 		/* Measure the time spent reading. No COW. */
 		millis_start = get_current_millis();
