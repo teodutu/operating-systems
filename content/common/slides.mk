@@ -6,8 +6,9 @@ all: videos html
 
 html: _site
 
-_site: slides.md
-	$(RVMD) $< --static $@
+_site: slides.mdpp
+	markdown-pp slides.mdpp -o slides.md
+	$(RVMD) slides.md --static $@
 
 videos:
 	for TARGET in $(TARGETS); do \
@@ -18,4 +19,4 @@ videos:
 clean:
 	-rm -f media/*-generated.gif
 	-rm -f *~
-	-rm -fr _site
+	-rm -fr _site slides.md
