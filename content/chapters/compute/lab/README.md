@@ -20,6 +20,8 @@ The latter metric revolves around how many average FPS (frames per second) a giv
 Most benchmarks, unfortunately, are not open source, especially the more popular ones, such as [Geekbench 5](https://browser.geekbench.com/processor-benchmarks).
 Despite this shortcoming, benchmarks are widely used to compare the performance of various computer **hardware**, CPUs included.
 
+## The Role of the Operating System
+
 As you've seen so far, the CPU provides the "muscle" requried for fast computation. i.e. the highly optimised hardware and multiple ALUs, FPUs
 and cores necessary to perform those computations.
 However, it is the **operating system** that provides the "brains" for this computation.
@@ -34,12 +36,12 @@ In addition, doing so would leave it up to the developer to isolate their applic
 This leaves applications vulnerable to countless bugs and exploits.
 
 To guard apps from these pitfalls, the OS comes and mediates interactions between regular programs and the CPU by providing a set of **abstractions**.
-These abstractions offer a safe, uniform and also sisolated way to leverage the CPU's resources, i.e. its cores.
+These abstractions offer a safe, uniform and also isolated way to leverage the CPU's resources, i.e. its cores.
 There are 2 main abstractions: **processes** and **threads**.
 
 ![Interaction between applications, OS and CPU](./media/app-os-cpu-interaction.svg)
 
-As we can see form the image above, an application can spawn one or more processes.
+As we can see from the image above, an application can spawn one or more processes.
 Each of these is handled and maintained by the OS.
 Similarly, each process can spawn however many threads, which are also managed by the OS.
 The OS decides when and on what CPU core to make each thread run.
@@ -61,7 +63,7 @@ student@os:~$ file /usr/bin/ls
 ```
 
 When you run it, the `ls` binary stored **on the disk** at `/usr/bin/ls` is read by another application called the **loader**.
-The loader spawns a **process** by copying some of the contents `/usr/bin/ls` in the RAM (such as the `.text`, `.rodata` and `.data` sections).
+The loader spawns a **process** by copying some of the contents `/usr/bin/ls` in memory (such as the `.text`, `.rodata` and `.data` sections).
 Using `strace`, we can see the [`execve`](https://man7.org/linux/man-pages/man2/execve.2.html) system call:
 ```
 student@os:~$ strace -s 100 ls -a  # -s 100 limits strings to 100 bytes instead of the default 32
@@ -105,7 +107,7 @@ You will most likely get a different sum (because the array is made up of random
 This is perfectly fine.
 Use these examples qualitatively, not quantitatively.
 
-### Processes
+### Spreading the Work Among Other Processes
 
 Due to how it's implemented so far, our program only uses one of our CPU's cores.
 We never tell it to distribute its workload on other cores.
@@ -132,7 +134,7 @@ We expect the speedups compared to our reference run to be 1, 2, 4 and 8 respect
 You most likely did get some speedup, especially when using 8 processes.
 Now we will try to improve this speedup by using **threads** instead.
 
-### Threads
+### Spreading the Work Among Other Threads
 
 Compile the code in `sum_array_threads.d` and run it using 1, 2, 4 and 8 threads as you did before.
 Each thread runs the `calculateArrayPartSum` function and then finishes.
@@ -142,28 +144,6 @@ The reason is that the time required to create a process is longer than that req
 Because a process needs a separate virtual address space (VAS) and needs to duplicate some internal structures such as the file descriptor table and page table, it takes the operating system more time to create it than to create a thread.
 On the other hand, threads belonging to the same process share the same VAS and, implicitly, the same OS-internal structures.
 Therefore, they are more lightweight than processes.
-
-#### Libraries for Parallel Processing
-
-Our previous implementation spawned the worker threads "manually" by using the `spawn` function.
-This is **not** a syscall, but a wrapper over the most common thread-management API in Linuxs: POSIX Threads or `pthreads`.
-Using `ltrace`, we can see that `spawn` calls `pthread_create` in order to spawn the new thread.
-In order to see what syscall `pthread_create` uses, check out [this section at the end of the lab](#threads-and-processes-clone).
-
-Most programming languages provide a more advanced API for handling parallel computation.
-D makes no exception.
-Its standard library exposesthe [`std.parallelism`](https://dlang.org/phobos/std_parallelism.html), which provides a series of parallel processing functions.
-One such function is `reduce` which splits an array between a given number of threads and applies a given operation to these chunks.
-In our case, the operation simply adds the elements to an accumulator: `a + b`.
-Follow and run the code in `sum_array_threads_reduce.d`.
-
-The number of threads is used within a [`TaskPool`](https://dlang.org/phobos/std_parallelism.html#.TaskPool)).
-This sturcrure is a thread manager (not scheduler).
-It silently creates the number of threads we request and then `reduce` spreads its workload between these threads.
-
-Now run the `sum_array_threads_reduce` binary using 1, 2, 4, and 8 threads as before.
-You'll see lower running times than `sum_array_threads` due to the highly-optimised code of the `reduce` function.
-For this reason and because library functions are usually much better tested than your own code, it is always preferred to use a library function for a given task.
 
 ### Threads vs Processes
 
@@ -190,12 +170,34 @@ clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, c
 ```
 
 We ran each program with an argument of 2, so we have 2 calls to `clone`.
-Notice that in the case of threads, then `clone` syscall receives more arguments.
-If we check [`clone`'s man page](https://man.archlinux.org/man/clone3.2.en) `flags` it receives specify the following:
+Notice that in the case of threads, the `clone` syscall receives more arguments.
+The relevant flags passed as arguments when creating threads are documented in [`clone`'s man page](https://man.archlinux.org/man/clone3.2.en):
 - `CLONE_VM`: the child and the parent process share the same VAS
 - `CLONE_{FS,FILES,SIGHAND}`: the new thread shares the filesystem information, file and signal handlers with the one that created it
 The syscall also receives valid pointers to the new thread's stack and TLS, i.e. the only parts of the VAS that are distinct between threads (although they are technically accessible from all threads).
 
-By contrast, when creating a new process the `clone` syscall receives far less information.
+By contrast, when creating a new process, the arguments of the `clone` syscall are simpler (i.e. fewer flags are present).
 Remember that in both cases `clone` creates a new **thread**.
-When creating a process, `clone` creates this new thread within a separate process.
+When creating a process, `clone` creates this new thread within a new separate address space.
+
+### Libraries for Parallel Processing
+
+In `support/sum-array/d/sum_array_threads.d` we spawned threads "manually" by using the `spawn` function.
+This is **not** a syscall, but a wrapper over the most common thread-management API in POSIX-based operating systems (such as Linux, FreeBSD, macOS): POSIX Threads or `pthreads`.
+Using `ltrace`, we can see that `spawn` calls `pthread_create` in order to spawn the new thread.
+In order to see what syscall `pthread_create` uses, check out [this section at the end of the lab](#threads-and-processes-clone).
+
+Most programming languages provide a more advanced API for handling parallel computation.
+D makes no exception.
+Its standard library exposes the [`std.parallelism`](https://dlang.org/phobos/std_parallelism.html), which provides a series of parallel processing functions.
+One such function is `reduce` which splits an array between a given number of threads and applies a given operation to these chunks.
+In our case, the operation simply adds the elements to an accumulator: `a + b`.
+Follow and run the code in `sum_array_threads_reduce.d`.
+
+The number of threads is used within a [`TaskPool`](https://dlang.org/phobos/std_parallelism.html#.TaskPool).
+This sturcture is a thread manager (not scheduler).
+It silently creates the number of threads we request and then `reduce` spreads its workload between these threads.
+
+Now run the `sum_array_threads_reduce` binary using 1, 2, 4, and 8 threads as before.
+You'll see lower running times than `sum_array_threads` due to the highly-optimised code of the `reduce` function.
+For this reason and because library functions are usually much better tested than your own code, it is always preferred to use a library function for a given task.

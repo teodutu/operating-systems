@@ -1,8 +1,6 @@
 module sum_array_threads;
 
-
 immutable size_t ARR_LEN = 100_000_000;
-
 
 void calculateArrayPartSum(immutable int[] arr, size_t start, size_t end,
     shared(long[]) results, size_t tid)
