@@ -149,7 +149,71 @@ Therefore, they are more lightweight than processes.
 
 So why use the implementation that spawns more processes if it's slower than the one using threads?
 
-TODO: security, isolation, separate tasks
+#### Safety
+
+Compile and run the two programs in `support/sum-array-bugs/seg-fault/`, first with 2 processes and threads and then with 4.
+They do the same thing as before: compute the sum the elements in an array, but with a twist: each of them contains a bug causing a seg fault.
+Notice that `sum_array_threads` doesn't print anything with 4 threads, but merely a "Segmentation fault" message.
+On the other hand, `sum_array_processes` prints a sum and a running time, albeit different from the sums we've seen so far.
+
+The reason is that signals such as `SIGSEGV`, which is used when a segmentation fault happens affect the entire process that handles them.
+Therefore, when we split our workload between several threads and one of them causes an error such as a seg fault, that error is going to terminate the entire process.
+The same thing happens when we use processes instead of threads: one process causes an error, which gets it killed, but the other processes continue their work unhindered.
+This is why we end up with a lower sum in the end: because one process died too early and didn't manage to write the partial sum it had computed to the `results` array.
+
+#### Practice
+
+The process that spawns all the others and subsequently calls `waitpid` to wait for them to finish can also get their return codes.
+Update the code in `support/sum-array-bugs/seg-fault/sum_array_processes.d` and modify the call to `waitpid` to obtain and investigate this return code.
+Display an appropriate message if one of the child processes returns an error.
+
+[Quiz](./quiz/seg-fault-exit-code.md)
+
+So up to this point we've seen that one advantage of processes is that they offer better safety than threads.
+Because they use separate virtual address spaces, sibling processes are better isolated than threads.
+Thus, an application that uses processes can be more robust to errors than if it were using threads.
+
+#### Memory Corruption
+
+Because they share the same address space,  threads run the risk of corrupting each other's data.
+Take a look at the code in `support/sum-array-bugs/memory-corruption/python/`.
+The two programs only differ in how they spread their workload.
+One uses threads while the other uses processes.
+
+Run both programs.
+The one using threads will most likely print a negative sum, while the other displays the correct sum.
+This happens because all threads refer the same memory for the array `arr`.
+What happens to the processes is a bit more complicated.
+[Later in this lab](#copy-on-write) we will see that initially, the page tables of all processes point to the same physical frames or `arr`.
+When the malicious process tries to corrupt this array by **writing data to it**, the OS duplicates the original frames of `arr` so that the malicious process writes the corrupted values to these new frames, while leaving the original ones untouched.
+This mechanism is called **Copy-on-Write** and is an OS optimisation so that memory is shared between the parent and the child process, until one of them attempts to write to it.
+At this point, this process receives its own separate copies of the previously shared frames.
+
+Note that in order for the processes to share the `sums` dictionary, it is not created as a regular dictionary, but using the `Manager` module.
+This module provides some special data structures that are allocated in **shared memory** so that all processes can access them.
+You can learn more about shared memory and its various implementations [in the "Arena" section](#shared-memory).
+
+### Conclusion
+
+We can sum up what we've learned so far by saying that processes are better used for separate, independent work, such as the different connections handled by a server.
+Conversely, threads are better suited for replicated work: when the same task has to be performed on multiple cores.
+However, replicated work can also be suited for processes.
+Distributed applications, however, leverage different processes as this allows them to run on multiple physical machines at once.
+This is required by the very large workloads such applications are commonly required to process.
+
+Therefore, there is also a gray area where there is no clear right answer to this debate.
+One such gray area are browsers.
+Some open a new tab in a separate process, while others do it in a separate thread instead.
+
+## Browser Fight
+
+Now we'll compare the two most popular browsers out there: Chrome and Firefox.
+
+- TODO: Firefox vs Chrome
+
+## Copy-on-Write
+
+TODO
 
 ## Arena
 
@@ -201,3 +265,9 @@ It silently creates the number of threads we request and then `reduce` spreads i
 Now run the `sum_array_threads_reduce` binary using 1, 2, 4, and 8 threads as before.
 You'll see lower running times than `sum_array_threads` due to the highly-optimised code of the `reduce` function.
 For this reason and because library functions are usually much better tested than your own code, it is always preferred to use a library function for a given task.
+
+## Shared Memory
+
+- TODO
+- `mmap`
+- high-level languages: D (`shared`), Python
