@@ -1,8 +1,6 @@
 module sum_array_processes;
 
-
 immutable size_t ARR_LEN = 100_000_000;
-
 
 void calculateArrayPartSum(immutable int[] arr, size_t start, size_t end,
     long[] results, size_t tid)
@@ -15,7 +13,6 @@ void calculateArrayPartSum(immutable int[] arr, size_t start, size_t end,
     results[tid] = sumArr;
 }
 
-
 long[] createSharedResultsArray(size_t numProcesses)
 {
     import core.sys.posix.sys.mman;
@@ -26,7 +23,6 @@ long[] createSharedResultsArray(size_t numProcesses)
         PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0))
         [0 .. numProcesses];
 }
-
 
 void main(string[] args)
 {
@@ -90,4 +86,3 @@ void main(string[] args)
     writeln("Array sum is: ", sumArr, "\nTime spent: ", sw.peek.total!"msecs",
         " ms");
 }
-

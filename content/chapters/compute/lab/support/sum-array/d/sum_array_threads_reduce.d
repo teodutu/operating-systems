@@ -1,8 +1,6 @@
 module sum_array_threads_reduce;
 
-
 immutable size_t ARR_LEN = 100_000_000;
-
 
 void main(string[] args)
 {

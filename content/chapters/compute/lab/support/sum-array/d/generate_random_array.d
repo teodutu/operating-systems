@@ -1,8 +1,6 @@
 module generate_random_array;
 
-
 immutable int MAX_ELEM = 1000;
-
 
 immutable(int[]) generateRandomArray(size_t length)
 {
