@@ -170,7 +170,7 @@ struct task_struct {
 * Returns twice
     * `0` in child process
     * Child's PID in parent process
-[Quiz](./quiz/process-creation.md)
+* [Quiz](./quiz/process-creation.md)
 * Initially child and parent share the same PAS (Physical Address Space)
 * Child's writable pages are marked **copy-on-write**
 
@@ -406,6 +406,11 @@ nonvoluntary_ctxt_switches:     3
     * Push each new thread to a queue
     * Every time slice, dequeue one thread, run it, then reenqueue it
     * Threads run in the order in which they're spawned
+
+----
+
+### Scheduling Algorithms - The Bigger Picture
+
 * **Completely Fair Scheduler (CFS)**:
     * Add new threads to a red-black tree sorted by total running time
     * Every time slice, remove, run and add the thread that has run the least back to the tree
@@ -817,7 +822,7 @@ var = 2000000; time = 1268 ms
 * Circular dependency
 * Threads cyclically wait for each other
 
-![Deadlock](media/deadlock.svg)
+![Deadlock](./media/deadlock.svg)
 
 ```
 student@os:~/.../compute/lecture/demo/deadlock$ python3 deadlock.py
@@ -825,8 +830,6 @@ Thread 1: locked resource 1. Waiting for resource 2...
 Thread 2: locked resource 2. Waiting for resource 1...
 
 ```
-
-* Now the threads are deadlocked
 
 ---
 
@@ -928,7 +931,7 @@ int tmp
 int add2(int x)
 {
     tmp = x;
-    return a + 2;
+    return x + 2;
 }
 
 /* Thread-safe not reentrant: */
@@ -951,6 +954,16 @@ int add2(int x)
 ## Cool Extra Stuff
 
 ---
+
+### Recap - `exec`
+
+* Replaces the VAS of a process with that of another one
+* Path to the binary file from which to start the second process given as argument
+* The file descriptors of the original process are maintained
+* Only returns in case of error
+    * Otherwise, the new process takes over
+
+----
 
 ### Create a new process - `fork` + `exec`
 
@@ -990,6 +1003,10 @@ strace: Process 117771 attached
 [pid 117771] execve("/usr/bin/ls", ["ls", "-la"], 0x55c700084048 /* 60 vars */) = 0
 [...]
 ```
+
+----
+
+### Libc vs Linux vs Windows
 
 * `system` first creates a new shell (`execve("/bin/sh"`)
 * This shell now spawns `ls -la` (`execve("/usr/bin/ls", ["ls", "-la"]`)
@@ -1085,4 +1102,4 @@ clone(child_stack=0x7f9ea7df0fb0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGH
 | implemented by libraries         | implemented by the kernel                  |
 | blocking actions stall process   | blocking actions only stall current thread |
 | more mapped on one kernel thread | provide support for user level threads     |
-| Java, Python, POSIX threads      | Linux KThreads, Windows threads            |
+| Java, Python,                    | Linux KThreads, Windows threads            |

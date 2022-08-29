@@ -10,7 +10,7 @@ Why does the shell **NOT** simply call `exec("/bin/ls")`?
 
 ## Question Answers
 
-- Because `/bin/ls` may be buggy or vulnerable and compromise the sell
+- Because `/bin/ls` may be buggy or vulnerable and compromise the shell
 + Because when `ls` ends, the shell is closed
 - Because the `ls` and `bash` processes must not share the same address space
 - Because `bash` needs to pass data to the `ls` process
