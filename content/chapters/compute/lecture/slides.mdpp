@@ -11,13 +11,17 @@ revealOptions:
 
 ---
 
-## 1. Processes
+## Processes
+
+----
+
+## Processes
 
 * A process is a **running program**
     * It is a collection of resources/abstractions (Memory, CPU, I/O)
 * An application can spawn multiple processes
 * The OS allows each thread to run on a **core** for a few milliseconds (time slice)
-    * See [section 4](#2-threads---backstory) for details regarding threads
+    * See [the corresponding section](#2-threads) for details regarding threads
 * Then the OS pauses the thread and replaces it with another one (context switch)
 
 ----
@@ -65,7 +69,7 @@ revealOptions:
 
 * PID: numeric identifier
 * PPID: parent's PID (one parent per process)
-* Running time
+* running time
 * threads
 
 ```
@@ -120,7 +124,10 @@ student@os:~$ ps -e --forest -o pid,ppid,rss,vsz,etime,stat,comm
 ### Process Attributes - from Kernel Space
 
 * PCB (Process Control Block):
-    * Data structure in the kernel - `task_struct` (in Linux)
+    * Data structure in the kernel
+        * [`task_struct`](https://elixir.bootlin.com/linux/v5.19.6/source/include/linux/sched.h#L726) in Linux
+        * [`EPROCESS`](https://www.nirsoft.net/kernel_struct/vista/KPROCESS.html) in Windows
+        * [`proc`](https://github.com/apple/darwin-xnu/blob/main/bsd/sys/proc_internal.h#L182) on XNU, the Apple iOS / macOS kernel
     * All information about the process (from `ps`, `/proc`)
 
 ----
@@ -186,7 +193,7 @@ When `fork` returns, the child duplicates the contents of the parent's page tabl
 
 ### Copy-on-write
 
-* Writable pages are **copied and modified** when written: `demo/copy-on-write/copy_on_write_overhead.c`
+* Writable pages are **copied and modified only** when written: `demo/copy-on-write/copy_on_write_overhead.c`
 * [Quiz](./quiz/sections-always-shared.md)
 
 ![Copy-on-write after Write](./media/copy-on-write-final.svg)
@@ -219,7 +226,11 @@ student@os:~$ cat /proc/`pidof copy_on_write_overhead`/stat | cut -d ' ' -f 10  
 
 ---
 
-## 2. Threads - Backstory
+## Threads
+
+----
+
+## Threads - Backstory
 
 * You have an application that applies filters to a set of images
 * Processes need to share all images
@@ -229,7 +240,7 @@ student@os:~$ cat /proc/`pidof copy_on_write_overhead`/stat | cut -d ' ' -f 10  
 
 ----
 
-### 2. Threads - Definitions
+### Threads - Definitions
 
 * Each process has at least one thread
 * Lightweight processes (LWP)
@@ -267,7 +278,7 @@ student@os:~$ cat /proc/`pidof copy_on_write_overhead`/stat | cut -d ' ' -f 10  
 | independent                      | part of a process                    |
 | isolated VAS                     | shares VAS with other threads        |
 | slower creation                  | faster creation                      |
-| slower context switch            | shorter context switch               |
+| larger context switch duration   | shorter context switch duration      |
 | ending means ending all threads  | other threads continue when finished |
 
 ----
@@ -282,7 +293,7 @@ vs
 
 ---
 
-## 3. Scheduling
+## Scheduling
 
 ----
 
@@ -320,7 +331,7 @@ A more detailed diagram is [here](#the-suspended-states)
 * Involuntary - initiated by the OS:
     * RUNNING thread ends
     * RUNNING thread's time slice expires
-    * A thread with higher priority is spawned
+    * A thread with higher priority is READY
 
 ----
 
@@ -333,7 +344,7 @@ A more detailed diagram is [here](#the-suspended-states)
 ### Types of Threads
 
 * CPU-intensive / CPU-bound = mostly CPU bursts:
-    * compute the digits of pi
+    * compute the digits of Pi
     * compilers
     * machine learning
 * I/O-intensive / I/O-bound = mostly I/O bursts:
@@ -352,6 +363,10 @@ student@os:~$ cat /proc/$(pidof cpu_bound)/status
 voluntary_ctxt_switches:        13
 nonvoluntary_ctxt_switches:     7
 ```
+
+----
+
+### IO-bound vs CPU-bound
 
 * `demo/context-switch/io_bound.c`:
 ```
@@ -385,7 +400,7 @@ nonvoluntary_ctxt_switches:     3
 ### Scheduling - Reality
 
 * There is no free lunch
-* Tradeoff between interactivity and throughput
+* Trade-off between interactivity and throughput
 
 ----
 
@@ -395,7 +410,7 @@ nonvoluntary_ctxt_switches:     3
     * Advantage: Simple to implement
     * Disadvantage: starvation - a thread might never yield its CPU core
 * **Preemptive:** also allows involuntary context switches
-    * Each process can run at most a certain _time slice_ / _quantum_
+    * Each process can run at most a certain _time slice_
     * When it expires, a context switch is triggered
 
 ----
@@ -585,7 +600,7 @@ student@os:~$ ps -e -o pid,ni,comm | grep 5753
 
 ---
 
-## 4. Synchronization
+## Synchronization
 
 ----
 

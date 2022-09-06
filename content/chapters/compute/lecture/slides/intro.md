@@ -1,7 +1,7 @@
 # COMPUTE
 
 1. [Processes](#1-processes)
-1. [Threads](#2-threads---backstory)
+1. [Threads](#2-threads)
 1. [Scheduling](#3-scheduling)
 1. [Synchronization](#4-synchronization)
 
@@ -9,7 +9,7 @@
 
 ### Backstory
 
-Apps running while you are doing your homework:
+Software running while you are doing your homework:
 * Code editor
 * Browser with 10+ https://stackoverflow.com/ tabs
 * Discord
@@ -26,7 +26,7 @@ Only one CPU. How?
 
 ![CPU Internals](media/cpu-internals.jpg)
 
-* More **cores** per CPU
+* Multiple **cores** per CPU
 * Still not enough for all processes
 
 ----
