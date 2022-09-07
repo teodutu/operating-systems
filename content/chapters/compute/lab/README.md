@@ -134,6 +134,56 @@ We expect the speedups compared to our reference run to be 1, 2, 4 and 8 respect
 You most likely did get some speedup, especially when using 8 processes.
 Now we will try to improve this speedup by using **threads** instead.
 
+#### Practice: High level - Python
+
+Head over to `support/sleepy/sleepy_creator.py`.
+Use `subprocess.Popen()` to spawn 10 `sleep 1000` processes.
+
+1. Now use the same `pstree -pac` command and look for `sleepy_creator.py`.
+It is a `python3` process, as this is the interpreter that runs the script, but we call it the `sleepy_creator.py` process for simplicity.
+If you found it, you did something wrong.
+It should be missing.
+Now use `pstree -pac` and look for the `sleep` processes you have just created.
+
+[Quiz](./quiz/parent-of-sleep-processes.md)
+
+2. Change the code in `sleepy_creator.py` so that the `sleep 1000` processes are the children of `sleepy_creator.py`.
+Kill the previously created `sleep` processes using `killall sleep`.
+Verify that `sleepy_creator.py` remains the parent of the `sleep`s it creates using `pstree -pac`.
+
+#### Practice: Lower level - C
+
+Now let's see how to create a child process in C.
+There are multiple ways of doing this.
+For now, we'll start with a higher-level approach.
+
+Go to `support/sleepy/sleepy_creator.c` and use [`system`](https://man7.org/linux/man-pages/man3/system.3.html) to create a `sleep 1000` process.
+
+[Quiz](./quiz/create-sleepy-process-ending.md)
+
+The `man` page also mentions that `system` calls `fork()` and `exec()` to run the command it's given.
+If you want to find out more about them, head over to the [Arena and create your own mini-shell](#mini-shell).
+
+#### Practice: Wait for Me!
+
+Run the code in `support/wait-for-me/wait_for_me_processes.py`.
+The parent process creates one child that writes and message to the given file.
+Then the parent reads that message.
+Simple enough, right?
+But running the code raises a `FileNotFoundError`.
+If you inspect the file you gave the script as an argument, it does contain a string.
+What's going on?
+
+[Quiz](./quiz/cause-of-file-not-found-error.md)
+
+In order to solve race conditions, we need **synchronization**.
+This is a mechanism similar to a set of traffic lights in a crossroads.
+Just like traffic lights allow some cars to pass only after others have already passed, synchronization is a means for threads to communicate with each other and tell each other to access a resource or not.
+
+The most basic form of synchronization is **waiting**.
+Concretely, if the parent process **waits** for the child to end, we are sure the file is created and its contents are written.
+Use `join()` to make the parent wait for its child before reading the file.
+
 ### Spreading the Work Among Other Threads
 
 Compile the code in `sum_array_threads.d` and run it using 1, 2, 4 and 8 threads as you did before.
@@ -144,6 +194,26 @@ The reason is that the time required to create a process is longer than that req
 Because a process needs a separate virtual address space (VAS) and needs to duplicate some internal structures such as the file descriptor table and page table, it takes the operating system more time to create it than to create a thread.
 On the other hand, threads belonging to the same process share the same VAS and, implicitly, the same OS-internal structures.
 Therefore, they are more lightweight than processes.
+
+#### Practice: Wait for Me Once More!
+
+Go to `support/wait-for-me/wait_for_me_threads.d`.
+Spawn a thread that executes the `negateArray()` function.
+For now, do not wait for it to finish; simply start it.
+
+Compile the code and run the resulting executable several times.
+See that the negative numbers appear from different indices.
+This is precisely the nondeterminism that we talked about [in the previous section](#practice-wait-for-me).
+
+Now wait for that thread to finish and see that all the printed numbers are consistently negative.
+
+As you can see, waiting is a very coarse form of synchronization.
+If we only use waiting, we can expect no speedup as a result of parallelism, because one thread must finish completely before another can continue.
+We will discuss more fine-grained synchronization mechanisms [later in this lab](#synchronization).
+
+Also, at this point, you might be wondering why this exercise is written in D, while [the same exercise, but with processes](#practice-wait-for-me) was written in Python.
+There is a very good reason for this and has to do with how threads are synchronized by default in Python.
+You can find out what this is about [in the Arena section](#the-gil), after you have completed the [Synchronization section](#synchronization).
 
 ### Threads vs Processes
 
@@ -161,7 +231,7 @@ Therefore, when we split our workload between several threads and one of them ca
 The same thing happens when we use processes instead of threads: one process causes an error, which gets it killed, but the other processes continue their work unhindered.
 This is why we end up with a lower sum in the end: because one process died too early and didn't manage to write the partial sum it had computed to the `results` array.
 
-#### Practice
+#### Practice: Wait for It!
 
 The process that spawns all the others and subsequently calls `waitpid` to wait for them to finish can also get their return codes.
 Update the code in `support/sum-array-bugs/seg-fault/sum_array_processes.d` and modify the call to `waitpid` to obtain and investigate this return code.
@@ -191,9 +261,16 @@ At this point, this process receives its own separate copies of the previously s
 
 Note that in order for the processes to share the `sums` dictionary, it is not created as a regular dictionary, but using the `Manager` module.
 This module provides some special data structures that are allocated in **shared memory** so that all processes can access them.
-You can learn more about shared memory and its various implementations [in the "Arena" section](#shared-memory).
+You can learn more about shared memory and its various implementations [in the Arena section](#shared-memory).
 
 ### Conclusion
+
+So far, you've probably seen that spawning a process can "use" a different program (hence the path in the args of `system` or `Popen`), but some languages such as Python allow you to spawn a process that executes a function from the same script.
+A thread, however, can only start from a certain entry point **within the current address space**, as it is bound to the same process.
+Concretely, a process is but a group of threads.
+For this reason, when we talk about scheduling or synchronization, we talk about threads.
+A thread is, thus, an abstraction of a task running on a CPU core.
+A process is a logical group of such tasks.
 
 We can sum up what we've learned so far by saying that processes are better used for separate, independent work, such as the different connections handled by a server.
 Conversely, threads are better suited for replicated work: when the same task has to be performed on multiple cores.
@@ -210,8 +287,25 @@ Some open a new tab in a separate process, while others do it in a separate thre
 Now we'll compare the two most popular browsers out there: Chrome and Firefox.
 
 - TODO: Firefox vs Chrome
+- Chrome: one process per tab.
+Each process uses separate threads for: https://chromium.googlesource.com/chromium/src/+/master/docs/threading_and_tasks.md#Threads
+
+- kill one tab in ff and chrome
+- there _should_ be different behaviours
+- quiz: why?
 
 ## Copy-on-Write
+
+TODO
+
+## Scheduling
+
+- cooperative: Unikraft.
+- practice: add prints, start threads, with and without `yielding`
+
+- D: TODO
+
+## Synchronization
 
 TODO
 
@@ -259,15 +353,63 @@ In our case, the operation simply adds the elements to an accumulator: `a + b`.
 Follow and run the code in `sum_array_threads_reduce.d`.
 
 The number of threads is used within a [`TaskPool`](https://dlang.org/phobos/std_parallelism.html#.TaskPool).
-This sturcture is a thread manager (not scheduler).
+This structure is a thread manager (not scheduler).
 It silently creates the number of threads we request and then `reduce` spreads its workload between these threads.
 
 Now run the `sum_array_threads_reduce` binary using 1, 2, 4, and 8 threads as before.
 You'll see lower running times than `sum_array_threads` due to the highly-optimised code of the `reduce` function.
 For this reason and because library functions are usually much better tested than your own code, it is always preferred to use a library function for a given task.
 
-## Shared Memory
+### Shared Memory
 
 - TODO
 - `mmap`
 - high-level languages: D (`shared`), Python
+
+### Mini-shell
+
+#### Fist Step: `system` Dissected
+
+You already know that `system` calls `fork()` and `execve()` to create the new process.
+Let's see how and why.
+First, we run the following command to trace the `execve()` syscalls used by `sleepy_creator`.
+We'll leave `fork()` for later.
+```
+student@os:~/.../support/sleepy$ strace -e execve -ff -o syscalls ./sleepy_creator
+```
+
+At this point you will get two files whose names start with `syscalls`, followed by some numbers.
+Those numbers are the PIDs of the parent and the child process.
+Therefore, the file with the higher number contains logs of the `execve` and `clone` syscalls issued by the parent process, while
+the other logs those two syscalls when made by the child process.
+Let's take a look at them.
+The numbers below will differ from those on your system:
+```
+student@os:~/.../support/sleepy:$ cat syscalls.2523393  # syscalls from parent process
+execve("sleepy_creator", ["sleepy_creator"], 0x7ffd2c157758 /* 39 vars */) = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=2523394, si_uid=1052093, si_status=0, si_utime=0, si_stime=0} ---
++++ exited with 0 +++
+
+student@os:~/.../support/sleepy:$ cat syscalls.2523394  # syscalls from child process
+execve("/bin/sh", ["sh", "-c", "sleep 10"], 0x7ffd36253be8 /* 39 vars */) = 0
+execve("/usr/bin/sleep", ["sleep", "10"], 0x560f41659d40 /* 38 vars */) = 0
++++ exited with 0 +++
+```
+
+[Quiz](./quiz/who-calls-execve-parent.md)
+
+Now notice that the child process doesn't simply call `execve("/usr/bin/sleep" ...)`.
+It first changes its virtual address space (VAS) to that of a `bash` process (`execve("/bin/sh" ...)`) and then that `bash` process switches its VAS to `sleep`.
+Therefore, calling `system(<some_command>)` is equivalent to running `<some_command>` in the command line.
+
+- TODO: so now we know that `bash` calls execve.
+Let's implement a minishell.
+The skeleton is in `TODO`.
+Use `execve` to launch the command.
+
+- quiz: what is the problem?
+- solution: add `fork`
+
+### The GIL
+
+- TODO
