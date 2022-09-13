@@ -281,6 +281,7 @@ This is required by the very large workloads such applications are commonly requ
 Therefore, there is also a gray area where there is no clear right answer to this debate.
 One such gray area are browsers.
 Some open a new tab in a separate process, while others do it in a separate thread instead.
+You can read more about how Firefox and Chrome use processes and threads on [this link](https://levelup.gitconnected.com/how-web-browsers-use-processes-and-threads-9f8f8fa23371).
 
 ## Browser Fight
 
@@ -289,14 +290,66 @@ Now we'll compare the two most popular browsers out there: Chrome and Firefox.
 - TODO: Firefox vs Chrome
 - Chrome: one process per tab.
 Each process uses separate threads for: https://chromium.googlesource.com/chromium/src/+/master/docs/threading_and_tasks.md#Threads
-
-- kill one tab in ff and chrome
-- there _should_ be different behaviours
-- quiz: why?
+Many processes open...
+- Firefox: 4 processes from the start.
+Each tab is a thread, but can also be a process when many tabs are opened...
 
 ## Copy-on-Write
 
-TODO
+So far you know that the parent and child process have separate virtual address spaces.
+But how are they created, namely how are they "separated"?
+And what about the **physical address space**?
+Of course we would like the stack of the parent, for example, to be physically distinct from that of the child so they can execute different functions and use different local variables.
+
+But should **all** the PAS of the parent be distinct from that of the child?
+What about some read-only memory sections, such as `.text` and `.rodata`?
+And what about the heap, where the child _may_ use some data previously written by the parent and then override it with its own data.
+
+The answer to all of these questions is a core mechanism of multi-process operating systems called **Copy-on-Write**.
+It works according to one very simple principle:
+> The VAS of the child process initially points to the same PAS as that of the parent.
+> A (physical) frame is only duplicated by the child when it attempts to **write** data to it.
+
+This ensures that read-only sections remain shared, while writable sections are shared as long as their contents remain unchanged.
+When changes happen, the process making the change receives a unique frame as a modified copy of the original frame _on demand_.
+
+**Be careful!**
+Do not confuse copy-on-write with demand paging.
+Remember from the [Data chapter](../../data/) that demand paging means that when you allocate memory the OS allocates virtual memory that remains unmapped to physical memory until it's used.
+On the other hand, copy-on-write posits that the virtual memory is already mapped to some frames.
+These frames are only duplicated when one of the processes attempts to write data to them.
+
+### `fork()`
+
+TODO: explain `fork()`.
+When?
+
+#### Practice
+
+Now let's see the copy-on-write mechanism in practice.
+Keep in mind that `fork()` is a function used to create a process.
+
+Open two terminals (or better: use [`tmux](https://github.com/tmux/tmux/wiki)).
+In one of them compile and run the code in `support/fork-faults/fork_faults.c`.
+After you press `Enter` in the first terminal window, run the following command in the second windwo:
+```
+student@os:~/.../lab/support/fork-faults$ ps -o min_flt,maj_flt $(pidof fork_faults)
+```
+It will show you the number of minor and major page faults performed by the `fork_faults` process and its child.
+
+[Quiz 1](./quiz/parent-faults-before-fork.md)
+
+Note that after `fork()`-ing, there is a second row in the output of `ps`.
+That corresponds to the child process.
+The first one still corresponds to the parent.
+
+[Quiz 2](./quiz/child-faults-after-write.md)
+
+Now it should be clear how demand paging differs from copy-on-write.
+Shared memory is a similar concept.
+It's a way of marking certain allocated pages so that copy-on-write is disabled.
+As you may imagine, changes made by the parent to this memory are visible to the child and vice-versa.
+You can learn more about it [its dedicated section in the Arena](#shared-memory).
 
 ## Scheduling
 
