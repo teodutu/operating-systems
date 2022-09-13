@@ -136,6 +136,8 @@ Now we will try to improve this speedup by using **threads** instead.
 
 #### Practice: High level - Python
 
+- TODO: provide `Popen` example
+
 Head over to `support/sleepy/sleepy_creator.py`.
 Use `subprocess.Popen()` to spawn 10 `sleep 1000` processes.
 
@@ -189,8 +191,7 @@ Use `join()` to make the parent wait for its child before reading the file.
 Compile the code in `sum_array_threads.d` and run it using 1, 2, 4 and 8 threads as you did before.
 Each thread runs the `calculateArrayPartSum` function and then finishes.
 Running times should be _slightly_ smaller than the implementation using processes.
-
-The reason is that the time required to create a process is longer than that required to create a thread.
+This slight time difference is caused by process creation actions, which are costlier than thread creation actions.
 Because a process needs a separate virtual address space (VAS) and needs to duplicate some internal structures such as the file descriptor table and page table, it takes the operating system more time to create it than to create a thread.
 On the other hand, threads belonging to the same process share the same VAS and, implicitly, the same OS-internal structures.
 Therefore, they are more lightweight than processes.
@@ -214,6 +215,11 @@ We will discuss more fine-grained synchronization mechanisms [later in this lab]
 Also, at this point, you might be wondering why this exercise is written in D, while [the same exercise, but with processes](#practice-wait-for-me) was written in Python.
 There is a very good reason for this and has to do with how threads are synchronized by default in Python.
 You can find out what this is about [in the Arena section](#the-gil), after you have completed the [Synchronization section](#synchronization).
+
+#### Practice: `fork()`
+
+TODO: explain `fork()`.
+When?
 
 ### Threads vs Processes
 
@@ -313,16 +319,13 @@ It works according to one very simple principle:
 This ensures that read-only sections remain shared, while writable sections are shared as long as their contents remain unchanged.
 When changes happen, the process making the change receives a unique frame as a modified copy of the original frame _on demand_.
 
+- TODO: cow picture from lecture
+
 **Be careful!**
 Do not confuse copy-on-write with demand paging.
 Remember from the [Data chapter](../../data/) that demand paging means that when you allocate memory the OS allocates virtual memory that remains unmapped to physical memory until it's used.
 On the other hand, copy-on-write posits that the virtual memory is already mapped to some frames.
 These frames are only duplicated when one of the processes attempts to write data to them.
-
-### `fork()`
-
-TODO: explain `fork()`.
-When?
 
 #### Practice
 
@@ -462,6 +465,12 @@ Use `execve` to launch the command.
 
 - quiz: what is the problem?
 - solution: add `fork`
+
+- TODO: moral of the story = fork + exec + wait + exit
+
+#### TODO: Another language
+
+- TODO: process executor in another language
 
 ### The GIL
 
