@@ -218,8 +218,38 @@ You can find out what this is about [in the Arena section](#the-gil), after you 
 
 #### Practice: `fork()`
 
-TODO: explain `fork()`.
-When?
+Up to now we've been creating processes using various high-level APIs, such as `Popen()`, `Process()` and `system()`.
+Yes, despite being a C function, as you've seen from its man page, `system()` itself calls 2 other functions: `fork()` to create a process and `execve()` to execute the given command.
+As you already know from the [Software Stack](../../software-stack/) chapter, library functions may call one or more underlying system calls or other functions.
+Now we will move one step lower on the call stack and call `fork()` ourselves.
+
+`fork()` creates one child process that is _almost_ identical to its parent.
+We say that `fork()` returns **twice**: once in the parent process and once more in the child process.
+This means that after `fork()` returns, assuming no error has occurred, both the child and the parent resume execution from the same place: the instruction following the call to `fork()`.
+What's different between the two processes is the value returned by `fork()`:
+- **child process**: `fork()` returns 0
+- **parent process**: `fork()` returns the PID of the child process (> 0)
+- **on error**: `fork()` returns -1, only once, in the initial process
+
+Therefore, the typical code for handling a `fork()` is available in `support/create-process/fork.c`.
+Take a look at it and then run it.
+Notice what each of the two processes prints:
+- the PID of the child is also known by the parent
+- the PPID of the child is the PID of the parent
+
+Unlike `system()`, who also waits for its child, when using `fork()` we must do the waiting ourselves. 
+In order to wait for a process to end, we use the [`waitpid()`](https://linux.die.net/man/2/waitpid) syscall.
+It places the exit code of the child process in the `status` parameter.
+This argument is actually a bitfield containing more information that merely the exit code.
+To retrieve the exit code, we use the `WEXITSTATUS` macro.
+You can view the rest of the information stored in the `status` bitfield [in the man page](https://linux.die.net/man/2/waitpid).
+
+1. Change the return value of the child process so that the value displayed by the parent is changed.
+
+2. Create a child process of the newly created child.
+Use a similar logic and a similar set of prints to those in the support code.
+Take a look at the printed PIDs.
+Make sure the PPID of the "grandchild" is the PID of the child, whose PPID is, in turn, the PID of the parent.
 
 ### Threads vs Processes
 
@@ -470,7 +500,7 @@ Use `execve` to launch the command.
 
 #### TODO: Another language
 
-- TODO: process executor in another language
+- process executor in another language
 
 ### The GIL
 
