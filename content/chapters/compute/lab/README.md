@@ -134,9 +134,19 @@ We expect the speedups compared to our reference run to be 1, 2, 4 and 8 respect
 You most likely did get some speedup, especially when using 8 processes.
 Now we will try to improve this speedup by using **threads** instead.
 
-#### Practice: High level - Python
+#### Practice: Baby steps - Python
 
-- TODO: provide `Popen` example
+Run the code in `support/create-process/popen.py`.
+It simply spawns a new process running the `ls` command using [`subprocess.Popen()`](https://docs.python.org/3/library/subprocess.html#subprocess.Popen).
+Do not worry about the huge list of arguments that `Popen()` takes.
+They are used for inter-process-communication.
+You'll learn more about this in the [Application Interaction chapter](../../app-interact/).
+
+Now change the command to anything you want.
+Also give it some arguments.
+From the outside, it's as if you were running these commands from the terminal.
+
+#### Practice: High level - Python
 
 Head over to `support/sleepy/sleepy_creator.py`.
 Use `subprocess.Popen()` to spawn 10 `sleep 1000` processes.
@@ -349,7 +359,15 @@ It works according to one very simple principle:
 This ensures that read-only sections remain shared, while writable sections are shared as long as their contents remain unchanged.
 When changes happen, the process making the change receives a unique frame as a modified copy of the original frame _on demand_.
 
-- TODO: cow picture from lecture
+In the image below we have the state of the child and parent processes right after `fork()` returns in both of them.
+See how each has its own VAS, both of them being mapped to (mostly) the same PAS.
+
+![Copy-on-Write](../lecture/media/copy-on-write-initial.svg)
+
+When one process writes data to a writeable page (in our case, the child writes to a heap page), the frame to which it corresponds is first duplicated.
+Then the process' page table points the page to the newly copied frame, as you can see in the image below.
+
+![Copy-on-Write](../lecture/media/copy-on-write-final.svg)
 
 **Be careful!**
 Do not confuse copy-on-write with demand paging.
