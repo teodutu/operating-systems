@@ -189,11 +189,11 @@ What's going on?
 
 [Quiz](./quiz/cause-of-file-not-found-error.md)
 
-In order to solve race conditions, we need **synchronization**.
+In order to solve race conditions, we need **synchronisation**.
 This is a mechanism similar to a set of traffic lights in a crossroads.
-Just like traffic lights allow some cars to pass only after others have already passed, synchronization is a means for threads to communicate with each other and tell each other to access a resource or not.
+Just like traffic lights allow some cars to pass only after others have already passed, synchronisation is a means for threads to communicate with each other and tell each other to access a resource or not.
 
-The most basic form of synchronization is **waiting**.
+The most basic form of synchronisation is **waiting**.
 Concretely, if the parent process **waits** for the child to end, we are sure the file is created and its contents are written.
 Use `join()` to make the parent wait for its child before reading the file.
 
@@ -219,13 +219,13 @@ This is precisely the nondeterminism that we talked about [in the previous secti
 
 Now wait for that thread to finish and see that all the printed numbers are consistently negative.
 
-As you can see, waiting is a very coarse form of synchronization.
+As you can see, waiting is a very coarse form of synchronisation.
 If we only use waiting, we can expect no speedup as a result of parallelism, because one thread must finish completely before another can continue.
-We will discuss more fine-grained synchronization mechanisms [later in this lab](#synchronization).
+We will discuss more fine-grained synchronisation mechanisms [later in this lab](#synchronisation).
 
 Also, at this point, you might be wondering why this exercise is written in D, while [the same exercise, but with processes](#practice-wait-for-me) was written in Python.
 There is a very good reason for this and has to do with how threads are synchronized by default in Python.
-You can find out what this is about [in the Arena section](#the-gil), after you have completed the [Synchronization section](#synchronization).
+You can find out what this is about [in the Arena section](#the-gil), after you have completed the [Synchronisation section](#synchronisation).
 
 #### Practice: `fork()`
 
@@ -318,7 +318,7 @@ You can learn more about shared memory and its various implementations [in the A
 So far, you've probably seen that spawning a process can "use" a different program (hence the path in the args of `system` or `Popen`), but some languages such as Python allow you to spawn a process that executes a function from the same script.
 A thread, however, can only start from a certain entry point **within the current address space**, as it is bound to the same process.
 Concretely, a process is but a group of threads.
-For this reason, when we talk about scheduling or synchronization, we talk about threads.
+For this reason, when we talk about scheduling or synchronisation, we talk about threads.
 A thread is, thus, an abstraction of a task running on a CPU core.
 A process is a logical group of such tasks.
 
@@ -407,16 +407,100 @@ It's a way of marking certain allocated pages so that copy-on-write is disabled.
 As you may imagine, changes made by the parent to this memory are visible to the child and vice-versa.
 You can learn more about it [its dedicated section in the Arena](#shared-memory).
 
+## Synchronisation
+
+So far we've used threads and processes without wondering how to "tell" them how to access shared data.
+Moreover, in order to make threads wait for each other, we simply had the main thread wait for the others to finish all their work.
+But wat if we want one thread to wait until another one simply performs some specific action after which it resumes its execution?
+For this, we need to use some more complex synchronisation mechanisms.
+
+### Race Conditions
+
+For example, what if one thread wants to increase a global variable while another one wants to decrease it?
+Let's say the assembly code for increasing and decreasing the variable looks like the one in the snippet below.
+
+```asm
+increase:
+    mov eax, [var]
+    inc eax
+    mov [var], eax
+
+decrease:
+    mov eax, [var]
+    dec eax
+    mov [var], eax
+```
+
+Imagine both threads executed `mov eax, [var]` at the same time.
+Then each would independently increase its (**non-shared**) `eax` register.
+In the end, the final value of `var` depends on which thread executes `mov [var], eax` _last_.
+So it's kind of a reversed race.
+The thread that runs the slowest "wins" this race and writes the final value of `var`.
+But this is up to the scheduler and is non-deterministic.
+Such undefined behaviours can cripple the execution of a program if `var` is some critical variable.
+
+Let's see this bug in action.
+Go to `support/race-condition/d/race_condition.d`, compile and run the code a few times.
+It spawns to threads that do exactly what we've talked about so far: one thread increments `var` 10 million times, while the other decrements it 10 million times.
+
+As you can see from running the program, the differences between subsequent runs can be substantial.
+To fix this, we must ensure that **only one thread** can execute either `var++` or `var--` at any time.
+We call these code sections **critical sections**.
+A critical section is a piece of code that can only be executed by **one thread** at a time.
+So we need some sort of _mutual exclusion mechanism_ so that when one thread runs the critical section, the other has to **wait** before entering it.
+This mechanism is called a **mutex**, whose name comes from "mutual exclusion".
+
+Go to `support/race-condition/d/race_condition_fixed.d` and notice the differences between this code and the buggy one.
+We now use a `Mutex` variable which we `lock()` at the beginning of a critical section and we `unlock()` at the end.
+Generally speaking `lock()`-ing a mutex makes a thread enter a critical section, while calling `unlock()` makes the thread leave said critical section.
+Therefore, as we said previously, the critical sections in our code are `var--` and `var++`.
+Run the code multiple times to convince yourself that in the end, the value of `var` will always be 0.
+
+Mutexes contain an internal variable which can be either 1 (locked) or 0 (unlocked).
+When a thread calls `lock()`, it attempts to set that variable to 1.
+If it was 0, the thread sets it to 1 and proceeds to execute the critical section.
+Otherwise, it **suspends its execution** and waits until that variable is set to 0 again.
+
+When calling `unlock()`, the internal variable is set to 0 and all waiting threads are woken up to try to acquire the mutex again.
+
+#### Synchronisation - Overhead
+
+> There ain't no such thing as a free lunch
+
+This saying is also true for multithreading.
+Running threads in parallel is nice and efficient, but synchronisation always comes with a penalty: overhead.
+Use the `time` command to record the running times of `race_condition` and `race_condition_mutex`.
+Notice that those of `race_condition_mutex` are larger than those of `race_condition`.
+
+The cause of this is that now when one thread is executing the critical section, the other has to wait and do nothing.
+Waiting means changing its state from RUNNING to WAITING, which brings further overhead from the scheduler.
+This latter overhead comes from the **context switch**s that is necessary for a thread to switch its state from RUNNING to WAITING and back.
+
+#### Practice: Wrap the Whole `for` Statements in Critical Sections
+
+Move the calls to `lock()` and `unlock()` outside the `for` statements so that the critical sections become the entire statement.
+Measure the time spent now by the code and compare it with the times recorded when the critical sections were made up of only `var--` and `var++`.
+
+[Quiz](./quiz/coarse-vs-granular-critical-section.md)
+
+### Atomics?
+
+- same example, but with atomics
+
+### Conditions
+
+### Barriers?
+
 ## Scheduling
 
-- cooperative: Unikraft.
+### Cooperative Scheduling
+
+- TODO: Unikraft.
 - practice: add prints, start threads, with and without `yielding`
 
+### Preemptive Scheduling
+
 - D: TODO
-
-## Synchronization
-
-TODO
 
 ## Arena
 
@@ -573,6 +657,11 @@ One version should use threads and the other should use processes.
 Run each of them using 1, 2, 4, and 8 threads / processes respectively and compare the running times.
 Notice that the running times of the multithreaded implementation do not decrease.
 This is because the GIL makes it so that those threads that you create essentially run sequentially.
+
+The GIL also makes it so that individual Python instructions are atomic.
+Run the code in `support/race-condition/python/race_condition.py`.
+Every time, `var` will be 0 because the GIL doesn't allow the two threads to run in parallel and reach the critical section at the same time.
+This means that the instructions `var += 1` and `var -= 1` become atomic.
 
 #### But Why?
 

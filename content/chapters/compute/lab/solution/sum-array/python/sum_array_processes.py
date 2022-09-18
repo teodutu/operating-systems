@@ -4,20 +4,16 @@ from sys import argv
 from random import randint
 from time import time_ns
 
-
 ARR_LEN = 10_000_000
-
 
 def generate_random_array(length=ARR_LEN):
     return [randint(1, 100) for _ in range(length)]
-
 
 def calculate_array_part_sum(arr, start, end, id, sums):
     sum_arr = 0
     for i in range(start, end):
         sum_arr += arr[i]
     sums[id] = sum_arr
-
 
 def main():
     if len(argv) < 2:
@@ -46,7 +42,6 @@ def main():
     time_spent = (time_end - time_start) / 1000_000
 
     print(f'Array sum is: {sum_arr}; time spent: {time_spent}ms')
-
 
 if __name__ == '__main__':
     exit(main())
