@@ -65,6 +65,7 @@ student@os:~$ file /usr/bin/ls
 When you run it, the `ls` binary stored **on the disk** at `/usr/bin/ls` is read by another application called the **loader**.
 The loader spawns a **process** by copying some of the contents `/usr/bin/ls` in memory (such as the `.text`, `.rodata` and `.data` sections).
 Using `strace`, we can see the [`execve`](https://man7.org/linux/man-pages/man2/execve.2.html) system call:
+
 ```
 student@os:~$ strace -s 100 ls -a  # -s 100 limits strings to 100 bytes instead of the default 32
 execve("/usr/bin/ls", ["ls", "-a"], 0x7fffa7e0d008 /* 61 vars */) = 0
@@ -261,6 +262,9 @@ Use a similar logic and a similar set of prints to those in the support code.
 Take a look at the printed PIDs.
 Make sure the PPID of the "grandchild" is the PID of the child, whose PPID is, in turn, the PID of the parent.
 
+**Moral of the story**: Usually the execution flow is `fork()`, followed by `wait()` (called by the parent) `exit()`, called by the child.
+The order of last 2 steps may be swapped.
+
 ### Threads vs Processes
 
 So why use the implementation that spawns more processes if it's slower than the one using threads?
@@ -382,7 +386,8 @@ Keep in mind that `fork()` is a function used to create a process.
 
 Open two terminals (or better: use [`tmux](https://github.com/tmux/tmux/wiki)).
 In one of them compile and run the code in `support/fork-faults/fork_faults.c`.
-After you press `Enter` in the first terminal window, run the following command in the second windwo:
+After you press `Enter` in the first terminal window, run the following command in the second windwow:
+
 ```
 student@os:~/.../lab/support/fork-faults$ ps -o min_flt,maj_flt $(pidof fork_faults)
 ```
@@ -421,6 +426,7 @@ Let's go back to our initial demos that used threads and processes.
 We'll see that in order to create both threads and processes, the underlying Linux syscall is `clone`.
 For this, we'll run both `sum_array_threads` and `sum_array_processes` under `strace`.
 As we've already established, we're only interested in the `clone` syscall:
+
 ```
 student@os:~/.../lab/support/sum-array/d/$ strace -e clone ./sum_array_threads 2
 clone(child_stack=0x7f60b56482b0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, parent_tid=[1819693], tls=0x7f60b5649640, child_tidptr=0x7f60b5649910) = 1819693
@@ -497,6 +503,7 @@ You already know that `system` calls `fork()` and `execve()` to create the new p
 Let's see how and why.
 First, we run the following command to trace the `execve()` syscalls used by `sleepy_creator`.
 We'll leave `fork()` for later.
+
 ```
 student@os:~/.../support/sleepy$ strace -e execve -ff -o syscalls ./sleepy_creator
 ```
@@ -507,6 +514,7 @@ Therefore, the file with the higher number contains logs of the `execve` and `cl
 the other logs those two syscalls when made by the child process.
 Let's take a look at them.
 The numbers below will differ from those on your system:
+
 ```
 student@os:~/.../support/sleepy:$ cat syscalls.2523393  # syscalls from parent process
 execve("sleepy_creator", ["sleepy_creator"], 0x7ffd2c157758 /* 39 vars */) = 0
@@ -525,19 +533,29 @@ Now notice that the child process doesn't simply call `execve("/usr/bin/sleep" .
 It first changes its virtual address space (VAS) to that of a `bash` process (`execve("/bin/sh" ...)`) and then that `bash` process switches its VAS to `sleep`.
 Therefore, calling `system(<some_command>)` is equivalent to running `<some_command>` in the command line.
 
-- TODO: so now we know that `bash` calls execve.
-Let's implement a minishell.
-The skeleton is in `TODO`.
-Use `execve` to launch the command.
+With this knowledge in mind, let's implement our own mini-shell.
+Start from the skeleton code in `support/mini-shell/mini_shell.c`.
+We're already running our Bash interpreter from the command line, so there's no need to `exec` another Bash from it.
+Simply `exec` the command.
 
-- quiz: what is the problem?
-- solution: add `fork`
+[Quiz](./quiz/mini-shell-stops-after-command.md)
 
-- TODO: moral of the story = fork + exec + wait + exit
+So we need a way to "save" the `mini_shell` process before `exec()`-ing our command.
+Find a way to do this.
 
-#### TODO: Another language
+> **Hint**:  You can see what `sleepy` does and draw inspiration from there.
+> Use `strace` to also list the calls to `clone()` perfromed by `sleepy` or its children.
+> [Remember](#threads-and-processes-clone) what `clone()` is used for and use its parameters to deduce which of the two scenarios happens to `sleepy`. 
 
-- process executor in another language
+**Moral of the story**: We can add another step to the moral of [our previous story](#practice-fork).
+When spawning a new command, the call order is:
+- parent: `fork()`, `exec()`, `wait()`
+- child: `exit()`
+
+#### Command Executor in Another language
+
+Now implement the same functionality (a Bash command executor) in any other language, other than C/C++.
+Use whatever API is provided by your language of choice for creating and waiting for processes.
 
 ### The GIL
 
