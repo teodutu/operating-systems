@@ -18,28 +18,26 @@ revealOptions:
 ## Processes
 
 * A process is a **running program**
-    * It is a collection of resources/abstractions (Memory, CPU, I/O)
+    * It is a collection of resources (Memory, CPU, I/O) and abstractions over them (VAS, threads, file descriptors) 
 * An application can spawn multiple processes
-* The OS allows each thread to run on a **core** for a few milliseconds (time slice)
-    * See [the corresponding section](#2-threads) for details regarding threads
+* The OS allows each [thread](#threads) to run on a **core** for a few milliseconds (time slice)
 * Then the OS pauses the thread and replaces it with another one (context switch)
-
-----
-
-### Scheduling - Overview
-
-![Scheduling Overview](media/scheduling-overview.svg)
 
 ----
 
 ### What We Want
 
 * Run more apps than cores
-* Efficient scheduling
-* Encapsulation and separation of tasks:
-    * VAS: isolate data
-    * CPU: computations, threads
-    * I/O: network packets, files
+* Use resources efficiently:
+    * Memory: isolated data
+    * CPU: low idle times
+    * I/O: responsiveness
+
+----
+
+### Resource Management - Overview
+
+![Resource Management](media/resource-management.svg)
 
 ----
 
@@ -53,7 +51,7 @@ revealOptions:
 
 ### Process Address Space
 
-* Each process has its own VAS (**Virtual Address Space**):
+* Each process has its own **Virtual Address Space (VAS)**:
     * Isolation
     * The process "thinks" it uses the entire address space
 
@@ -82,7 +80,6 @@ student@os:~/.../compute/lecture/demo/create-thread$ python3 create_process.py
 
 ### Process Attributes - from User Space
 
-`ps`:
 ```
 student@os:~$ ps -e --forest -o pid,ppid,rss,vsz,etime,stat,comm
   PID  PPID   RSS    VSZ     ELAPSED STAT COMMAND
@@ -242,9 +239,9 @@ student@os:~$ cat /proc/`pidof copy_on_write_overhead`/stat | cut -d ' ' -f 10  
 
 ### Threads - Definitions
 
-* Each process has at least one thread
-* Lightweight processes (LWP)
 * Scheduling unit
+* Lightweight processes (LWP)
+* Each process has at least one thread
 
 ---
 
@@ -749,6 +746,12 @@ void mutex_unlock(struct mutex *m)
 * Introduces overhead from context switch
 * Releasing a mutex held by another thread is [**undefinded behaviour**](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_mutex_lock.html)
 
+----
+
+## Who Should Release the Lock?
+
+![Locks Undefined Behaviour](./media/lock-undefined-behaviour.svg)
+
 ---
 
 ### Mutual Exclusion - Overhead
@@ -784,12 +787,6 @@ var = 2000000; time = 36 ms
 student@os:~/.../compute/lecture/demo/granularity$ ./fine_granularity
 var = 2000000; time = 1268 ms
 ```
-
-----
-
-## Who Should Release the Lock?
-
-![Locks vs Notifications](./media/lock-undefined-behaviour.svg)
 
 ---
 
