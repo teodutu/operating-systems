@@ -483,9 +483,37 @@ Measure the time spent now by the code and compare it with the times recorded wh
 
 [Quiz](./quiz/coarse-vs-granular-critical-section.md)
 
-### Atomics?
+### Atomics
 
-- same example, but with atomics
+So now we know how to use mutexes.
+And we know that mutexes work by using an internal variable that can be either 1 (locked) or 0 (unlocked).
+But how does `lock()` actually set that variable to 1?
+How does it avoid a race condition in case another thread also wants to set it to 1?
+
+We need a guarantee that anyone "touching" that variable does so "within its own critical section".
+But now we need a critical section to implement a critical section...
+To solve this circular problem, we make use of a very common _Deus ex Machina_: **hardware support**.
+
+Modern processors are capable of _atomically_ accessing data, either for reads or writes.
+An atomic action is and indivisible sequence of operations that a thread runs without interference from others.
+Concretely, before initiating an atomic transfer on one of its data buses, the CPU first makes sure all other transfers have ended, then **locks** the data bus by stalling all cores attempting to transfer data on it.
+This way, one thread obtains **exclusive** access to the data bus while accessing data.
+As a side note, the critical sections in `support/race-condition/race_condition_mutex.d` are also atomic once they are wrapped between calls to `lock()` and `unlock()`. 
+
+As with every hardware feature, the x86 ISA exposes the `lock` instruction, which makes a given instruction run atomically.
+You can play with it [in the Arena](#atomic-assembly).
+
+Compilers provide support for such hardware-level atomic operations.
+GCC exposes [builtins](https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html) such as `__atomic_load()`, `__atomic_store()`, `__atomic_compare_exchange()` and many others.
+All of them rely on the mechanism described above.
+
+In D, this functionality is implemented in the `core.atomic` module.
+Go to `support/race-condition/d/race_condition_atomic.d` and complete the function `decrementVar()`.
+Compile and run the code.
+Now measure its running time against the mutex implementations.
+It should be somewhere between `race_condition.d` and `race_condition_mutex.d`.
+
+So using the hardware support is more efficient, but it can only be leveraged for simple, individual instructions, such as loads and stores.
 
 ### Conditions
 
@@ -683,3 +711,7 @@ Single-threadedness is a common trope for interpreted languages to use some sort
 JavaScript is even more straightforward: it is single-threaded by design, also for GC-related reasons.
 It does, however support asynchronous actions, but these are executed on the same thread as every other code.
 This is implemented by placing each instruction on a [call stack](https://medium.com/swlh/what-does-it-mean-by-javascript-is-single-threaded-language-f4130645d8a9). 
+
+### Atomic Assembly
+
+- TODO: `lock`

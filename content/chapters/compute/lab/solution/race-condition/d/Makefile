@@ -1,5 +1,5 @@
 DC = dmd
-BINARIES = race_condition_mutex_coarse
+BINARIES = race_condition_mutex_coarse race_condition_atomic
 
 all: $(BINARIES)
 
