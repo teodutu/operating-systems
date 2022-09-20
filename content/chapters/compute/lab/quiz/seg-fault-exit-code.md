@@ -13,6 +13,7 @@ What is the exit code of the faulty child process spawned by `support/sum-array-
 
 ## Feedback
 
-We can obtain the exit code of a child process via the second argument of the `waitpid` syscall.
+We can obtain the number of the signal that killed a child process via the second argument of the `waitpid` syscall.
+We can use the `WIFSIGNALED()` and `WTERMSIG()` marcros.
 By doing so, we see the exit code of the faulty child process is 11.
 We can then use the `kill -l` command to view the code of each signal and `SIGSEGV` has the code 11.
