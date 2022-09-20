@@ -64,8 +64,9 @@ int main(void)
 		ret_pid = waitpid(pid, &status, 0);
 		DIE(ret_pid < 0, "waitpid parent");
 
-		printf("[parent] Child process exited with status %d\n",
-			WEXITSTATUS(status));
+		if (WIFEXITED(status))
+			printf("[parent] Child process exited with status %d\n",
+				WEXITSTATUS(status));
 		break;
 	}
 

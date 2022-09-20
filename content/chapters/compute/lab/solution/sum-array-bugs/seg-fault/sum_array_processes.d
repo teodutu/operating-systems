@@ -34,7 +34,7 @@ void main(string[] args)
     import std.algorithm : min;
     import std.conv : to;
     import core.stdc.stdlib : exit;
-    import core.sys.posix.sys.wait : waitpid;
+    import core.sys.posix.sys.wait;
     import core.sys.posix.unistd : fork, pid_t;
     import std.datetime.stopwatch : StopWatch;
     import std.math.rounding : ceil;
@@ -83,9 +83,12 @@ void main(string[] args)
     for (size_t i = 0; i < numProcesses; ++i)
     {
         waitpid(children[i], &status, 0);
-        if (status)
+        if (WIFEXITED(status))
+            writeln("Process ", i, " ended with exit code ",
+                WEXITSTATUS(status));
+        else if (WIFSIGNALED(status))
         {
-            writeln("Process ", i, " ended with status ", status);
+            writeln("Process ", i, " was killed by signal ", WTERMSIG(status));
             exit(2);
         }
         sumArr += results[i];

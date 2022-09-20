@@ -30,7 +30,7 @@ int main(void)
 
 	p = mmap(NULL, NUM_PAGES * page_size, PROT_READ | PROT_WRITE,
 		MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-    DIE(p == MAP_FAILED, "mmap");
+	DIE(p == MAP_FAILED, "mmap");
 
 	wait_for_input("1. Pages allocated");
 
@@ -41,7 +41,7 @@ int main(void)
 
 	switch (fork()) {
 		case -1:    /* Handle error */
-            DIE(1, "fork");
+		DIE(1, "fork");
 
 		case 0:     /* Child process */
 			wait_for_input("3. Child process begins");

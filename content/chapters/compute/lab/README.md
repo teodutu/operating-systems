@@ -97,9 +97,7 @@ The program also measures the time spent computing the sum.
 Let's compile and run it:
 
 ```
-student@os:~/.../lab/support/sum-array/d/$
-
-student@os:~$ ./sum_array_sequential
+student@os:~/.../lab/support/sum-array/d$ ./sum_array_sequential
 Array sum is: 49945994146
 Time spent: 127 ms
 ```
@@ -127,6 +125,7 @@ If we split the array into several equal parts and designate a separate process 
 
 Let's take it methodically.
 Compile and run `sum_array_processes.d` using 1, 2, 4 and 8 processes respectively.
+If your system only has 4 cores ([hyperthreading](https://www.intel.com/content/www/us/en/gaming/resources/hyper-threading.html) included), limit your runs to 4 processes.
 Note the running times for each number of processes.
 We expect the speedups compared to our reference run to be 1, 2, 4 and 8 respectively, right?
 
@@ -134,6 +133,12 @@ We expect the speedups compared to our reference run to be 1, 2, 4 and 8 respect
 
 You most likely did get some speedup, especially when using 8 processes.
 Now we will try to improve this speedup by using **threads** instead.
+
+Also notice that we're not using hundreds or thousands of processes.
+Assuming our system has 8 cores, only 8 _threads_ (we'll see this later in the lab) can run at the same time.
+In general, **the maximum number of threads that can run at the same time is equal to the number of cores**.
+In our example, each process only has one thread: its main thread.
+So by consequence and by forcing the terminology (because it's the main thread of these processes that is running, not the processes themselves), we can only run in parallel a number of processes equal to at most the number of cores.
 
 #### Practice: Baby steps - Python
 
@@ -197,9 +202,51 @@ The most basic form of synchronisation is **waiting**.
 Concretely, if the parent process **waits** for the child to end, we are sure the file is created and its contents are written.
 Use `join()` to make the parent wait for its child before reading the file.
 
+#### Practice: `fork()`
+
+Up to now we've been creating processes using various high-level APIs, such as `Popen()`, `Process()` and `system()`.
+Yes, despite being a C function, as you've seen from its man page, `system()` itself calls 2 other functions: `fork()` to create a process and `execve()` to execute the given command.
+As you already know from the [Software Stack](../../software-stack/) chapter, library functions may call one or more underlying system calls or other functions.
+Now we will move one step lower on the call stack and call `fork()` ourselves.
+
+`fork()` creates one child process that is _almost_ identical to its parent.
+We say that `fork()` returns **twice**: once in the parent process and once more in the child process.
+This means that after `fork()` returns, assuming no error has occurred, both the child and the parent resume execution from the same place: the instruction following the call to `fork()`.
+What's different between the two processes is the value returned by `fork()`:
+- **child process**: `fork()` returns 0
+- **parent process**: `fork()` returns the PID of the child process (> 0)
+- **on error**: `fork()` returns -1, only once, in the initial process
+
+Therefore, the typical code for handling a `fork()` is available in `support/create-process/fork.c`.
+Take a look at it and then run it.
+Notice what each of the two processes prints:
+- the PID of the child is also known by the parent
+- the PPID of the child is the PID of the parent
+
+Unlike `system()`, who also waits for its child, when using `fork()` we must do the waiting ourselves. 
+In order to wait for a process to end, we use the [`waitpid()`](https://linux.die.net/man/2/waitpid) syscall.
+It places the exit code of the child process in the `status` parameter.
+This argument is actually a bitfield containing more information that merely the exit code.
+To retrieve the exit code, we use the `WEXITSTATUS` macro.
+Keep in mind that `WEXITSTATUS` only makes sens if `WIFEXITED` is true, i.e. if the child process finished on its own and wasn't killed by another one or by an illegal action (such as a seg fault or illegal instruction) for example.
+Otherwise, `WEXITSTATUS` will return something meaningless.
+You can view the rest of the information stored in the `status` bitfield [in the man page](https://linux.die.net/man/2/waitpid).
+
+Now modify the example to do the following:
+
+1. Change the return value of the child process so that the value displayed by the parent is changed.
+
+2. Create a child process of the newly created child.
+Use a similar logic and a similar set of prints to those in the support code.
+Take a look at the printed PIDs.
+Make sure the PPID of the "grandchild" is the PID of the child, whose PPID is, in turn, the PID of the parent.
+
+**Moral of the story**: Usually the execution flow is `fork()`, followed by `wait()` (called by the parent) `exit()`, called by the child.
+The order of last 2 steps may be swapped.
+
 ### Spreading the Work Among Other Threads
 
-Compile the code in `sum_array_threads.d` and run it using 1, 2, 4 and 8 threads as you did before.
+Compile the code in `support/sum-array/d/sum_array_threads.d` and run it using 1, 2, 4 and 8 threads as you did before.
 Each thread runs the `calculateArrayPartSum` function and then finishes.
 Running times should be _slightly_ smaller than the implementation using processes.
 This slight time difference is caused by process creation actions, which are costlier than thread creation actions.
@@ -227,44 +274,6 @@ Also, at this point, you might be wondering why this exercise is written in D, w
 There is a very good reason for this and has to do with how threads are synchronized by default in Python.
 You can find out what this is about [in the Arena section](#the-gil), after you have completed the [Synchronisation section](#synchronisation).
 
-#### Practice: `fork()`
-
-Up to now we've been creating processes using various high-level APIs, such as `Popen()`, `Process()` and `system()`.
-Yes, despite being a C function, as you've seen from its man page, `system()` itself calls 2 other functions: `fork()` to create a process and `execve()` to execute the given command.
-As you already know from the [Software Stack](../../software-stack/) chapter, library functions may call one or more underlying system calls or other functions.
-Now we will move one step lower on the call stack and call `fork()` ourselves.
-
-`fork()` creates one child process that is _almost_ identical to its parent.
-We say that `fork()` returns **twice**: once in the parent process and once more in the child process.
-This means that after `fork()` returns, assuming no error has occurred, both the child and the parent resume execution from the same place: the instruction following the call to `fork()`.
-What's different between the two processes is the value returned by `fork()`:
-- **child process**: `fork()` returns 0
-- **parent process**: `fork()` returns the PID of the child process (> 0)
-- **on error**: `fork()` returns -1, only once, in the initial process
-
-Therefore, the typical code for handling a `fork()` is available in `support/create-process/fork.c`.
-Take a look at it and then run it.
-Notice what each of the two processes prints:
-- the PID of the child is also known by the parent
-- the PPID of the child is the PID of the parent
-
-Unlike `system()`, who also waits for its child, when using `fork()` we must do the waiting ourselves. 
-In order to wait for a process to end, we use the [`waitpid()`](https://linux.die.net/man/2/waitpid) syscall.
-It places the exit code of the child process in the `status` parameter.
-This argument is actually a bitfield containing more information that merely the exit code.
-To retrieve the exit code, we use the `WEXITSTATUS` macro.
-You can view the rest of the information stored in the `status` bitfield [in the man page](https://linux.die.net/man/2/waitpid).
-
-1. Change the return value of the child process so that the value displayed by the parent is changed.
-
-2. Create a child process of the newly created child.
-Use a similar logic and a similar set of prints to those in the support code.
-Take a look at the printed PIDs.
-Make sure the PPID of the "grandchild" is the PID of the child, whose PPID is, in turn, the PID of the parent.
-
-**Moral of the story**: Usually the execution flow is `fork()`, followed by `wait()` (called by the parent) `exit()`, called by the child.
-The order of last 2 steps may be swapped.
-
 ### Threads vs Processes
 
 So why use the implementation that spawns more processes if it's slower than the one using threads?
@@ -287,6 +296,12 @@ The process that spawns all the others and subsequently calls `waitpid` to wait 
 Update the code in `support/sum-array-bugs/seg-fault/sum_array_processes.d` and modify the call to `waitpid` to obtain and investigate this return code.
 Display an appropriate message if one of the child processes returns an error.
 
+Remember to use the appropriate [macros](https://linux.die.net/man/2/waitpid) for handling the `status` variable that is modified by `waitpid`, as it is a bitfield.
+When a process runs into a system error, it receives a signal.
+A signal is a means to interrupt the normal execution of a program from the outside.
+It is associated with a number.
+Use `kill -l` to find the full list of signals. 
+
 [Quiz](./quiz/seg-fault-exit-code.md)
 
 So up to this point we've seen that one advantage of processes is that they offer better safety than threads.
@@ -300,10 +315,21 @@ Take a look at the code in `support/sum-array-bugs/memory-corruption/python/`.
 The two programs only differ in how they spread their workload.
 One uses threads while the other uses processes.
 
-Run both programs.
+Run both programs with and without memory corruption.
+Pass any value as a third argument to trigger the corruption.
+
+```
+student@os:~/.../sum-array-bugs/memory-corruption/python$ python3 memory_corruption_processes.py <number_of_processes>  # no memory corruption
+[...]
+
+student@os:~/.../sum-array-bugs/memory-corruption/python$ python3 memory_corruption_processes.py <number_of_processes> 1  # do memory corruption
+[...]
+```
+
 The one using threads will most likely print a negative sum, while the other displays the correct sum.
 This happens because all threads refer the same memory for the array `arr`.
 What happens to the processes is a bit more complicated.
+
 [Later in this lab](#copy-on-write) we will see that initially, the page tables of all processes point to the same physical frames or `arr`.
 When the malicious process tries to corrupt this array by **writing data to it**, the OS duplicates the original frames of `arr` so that the malicious process writes the corrupted values to these new frames, while leaving the original ones untouched.
 This mechanism is called **Copy-on-Write** and is an OS optimisation so that memory is shared between the parent and the child process, until one of them attempts to write to it.
@@ -312,6 +338,12 @@ At this point, this process receives its own separate copies of the previously s
 Note that in order for the processes to share the `sums` dictionary, it is not created as a regular dictionary, but using the `Manager` module.
 This module provides some special data structures that are allocated in **shared memory** so that all processes can access them.
 You can learn more about shared memory and its various implementations [in the Arena section](#shared-memory).
+
+#### TODO: sum-array with "shared: `sum`
+
+- threads can modify it
+- processes can't
+- reference TLS and shared memory.
 
 ### Conclusion
 
@@ -384,13 +416,14 @@ These frames are only duplicated when one of the processes attempts to write dat
 Now let's see the copy-on-write mechanism in practice.
 Keep in mind that `fork()` is a function used to create a process.
 
-Open two terminals (or better: use [`tmux](https://github.com/tmux/tmux/wiki)).
+Open two terminals (or better: use [`tmux`](https://github.com/tmux/tmux/wiki)).
 In one of them compile and run the code in `support/fork-faults/fork_faults.c`.
-After you press `Enter` in the first terminal window, run the following command in the second windwow:
+After each time you press `Enter` in the first terminal window, run the following command in the second window:
 
 ```
 student@os:~/.../lab/support/fork-faults$ ps -o min_flt,maj_flt $(pidof fork_faults)
 ```
+
 It will show you the number of minor and major page faults performed by the `fork_faults` process and its child.
 
 [Quiz 1](./quiz/parent-faults-before-fork.md)
@@ -413,6 +446,9 @@ So far we've used threads and processes without wondering how to "tell" them how
 Moreover, in order to make threads wait for each other, we simply had the main thread wait for the others to finish all their work.
 But wat if we want one thread to wait until another one simply performs some specific action after which it resumes its execution?
 For this, we need to use some more complex synchronisation mechanisms.
+
+- TODO: add `__thread`
+- say that by default global vars are thread-specific in D (for safety)
 
 ### Race Conditions
 
@@ -450,7 +486,7 @@ A critical section is a piece of code that can only be executed by **one thread*
 So we need some sort of _mutual exclusion mechanism_ so that when one thread runs the critical section, the other has to **wait** before entering it.
 This mechanism is called a **mutex**, whose name comes from "mutual exclusion".
 
-Go to `support/race-condition/d/race_condition_fixed.d` and notice the differences between this code and the buggy one.
+Go to `support/race-condition/d/race_condition_mutex.d` and notice the differences between this code and the buggy one.
 We now use a `Mutex` variable which we `lock()` at the beginning of a critical section and we `unlock()` at the end.
 Generally speaking `lock()`-ing a mutex makes a thread enter a critical section, while calling `unlock()` makes the thread leave said critical section.
 Therefore, as we said previously, the critical sections in our code are `var--` and `var++`.
@@ -515,18 +551,27 @@ It should be somewhere between `race_condition.d` and `race_condition_mutex.d`.
 
 So using the hardware support is more efficient, but it can only be leveraged for simple, individual instructions, such as loads and stores.
 
+### Semaphore
+
 ### Conditions
 
-### Barriers?
+- TODO
 
 ## Scheduling
 
-### Cooperative Scheduling
+- TODO: find / make minimalistic library (lists, some data structure) thread-safe
+- https://github.com/Pithikos/C-Thread-Pool
+- https://github.com/aknooh/User-level-thread-library
+- https://github.com/bhaargav006/User-Thread-Library
+- https://github.com/kissen/threads
+- https://www.schaertl.me/posts/a-bare-bones-user-level-thread-library/
+
+### Cooperative Scheduling - Too Much
 
 - TODO: Unikraft.
 - practice: add prints, start threads, with and without `yielding`
 
-### Preemptive Scheduling
+### Preemptive Scheduling - Too Much
 
 - D: TODO
 
@@ -540,11 +585,11 @@ For this, we'll run both `sum_array_threads` and `sum_array_processes` under `st
 As we've already established, we're only interested in the `clone` syscall:
 
 ```
-student@os:~/.../lab/support/sum-array/d/$ strace -e clone ./sum_array_threads 2
+student@os:~/.../lab/support/sum-array/d$ strace -e clone ./sum_array_threads 2
 clone(child_stack=0x7f60b56482b0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, parent_tid=[1819693], tls=0x7f60b5649640, child_tidptr=0x7f60b5649910) = 1819693
 clone(child_stack=0x7f60b4e472b0, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS|CLONE_PARENT_SETTID|CLONE_CHILD_CLEARTID, parent_tid=[1819694], tls=0x7f60b4e48640, child_tidptr=0x7f60b4e48910) = 1819694
 
-student@os:~/.../lab/support/sum-array/d/$ strace -e clone ./sum_array_processes 2
+student@os:~/.../lab/support/sum-array/d$ strace -e clone ./sum_array_processes 2
 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7a4e346650) = 1820599
 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7a4e346650) = 1820600
 ```
@@ -564,8 +609,11 @@ When creating a process, `clone` creates this new thread within a new separate a
 
 In `support/sum-array/d/sum_array_threads.d` we spawned threads "manually" by using the `spawn` function.
 This is **not** a syscall, but a wrapper over the most common thread-management API in POSIX-based operating systems (such as Linux, FreeBSD, macOS): POSIX Threads or `pthreads`.
-Using `ltrace`, we can see that `spawn` calls `pthread_create` in order to spawn the new thread.
-In order to see what syscall `pthread_create` uses, check out [this section at the end of the lab](#threads-and-processes-clone).
+By inspecting the [implementation of `spawn`](https://github.com/dlang/phobos/blob/352258539ca54e640e862f79b2b8ec18aafa7d94/std/concurrency.d#L618-L622), we see that it creates a `Thread` object, on which it calls the `start()` method.
+In turn, [`start()` uses `pthread_create()`](https://github.com/dlang/dmd/blob/cc117cd45c7d72ce5a87b775e65a9d13fa4d4424/druntime/src/core/thread/osthread.d#L454-L486) on POSIX systems.
+
+Still, `pthread_create()` is not yet a syscall.
+In order to see what syscall `pthread_create()` uses, check out [this section at the end of the lab](#threads-and-processes-clone).
 
 Most programming languages provide a more advanced API for handling parallel computation.
 D makes no exception.
@@ -678,6 +726,12 @@ As its name suggests, this is a lock implemented inside most commonly used Pytho
 As a consequence, multithreaded programs written in Python run **concurrently**, not in parallel.
 For this reason, you will see no speedup even when you run an embarrassingly parallel code in parallel.
 
+However, keep in mind that this drawback does not make threads useless in Python.
+They are still useful and widely used when a process needs to perform many IO-bound tasks (i.e.: tasks that involve many file reads / writes or network requests).
+Such tasks run many blocking syscalls that require the thread to switch from the RUNNING state to WAITING.
+Doing so voluntarily makes threads viable because they rarely run for their entire time slice and spend most of the time waiting for data.
+So it doesn't hurt them to run concurrently, instead of in parallel.
+
 #### Practice: Array Sum in Python
 
 Let's first probe this by implementing two parallel versions of the code in `support/sum-array/python/sum_array_sequential.py`.
@@ -715,3 +769,4 @@ This is implemented by placing each instruction on a [call stack](https://medium
 ### Atomic Assembly
 
 - TODO: `lock`
+- also add this to the course
