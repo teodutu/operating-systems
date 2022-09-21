@@ -768,5 +768,24 @@ This is implemented by placing each instruction on a [call stack](https://medium
 
 ### Atomic Assembly
 
-- TODO: `lock`
-- also add this to the course
+No, this section is not about nukes, sadly :(.
+Instead, we aim to get accustomed to the way in which the x86 ISA provides atomic instructions.
+
+This mechanism looks very simple.
+It is but **one instruction prefix**: `lock`.
+It is not an instruction with its own separate opcode, but a prefix that slightly modifie the opcode of the following instructions to make the CPU execute it atomically (i.e. with exclusive access to the data bus).
+
+`lock` must only be place before an instruction that executes a _read-modify-write_ action.
+For example, we cannot place it before a `mov` instruction, as the action of a `mov` is simply `read` or `write`.
+Instead, we can place it in front of an `inc` instruction if its operand is memory.
+
+Look at the code in `support/race-condition/asm/race_condition_lock.S`.
+It's an Assembly equivalent of the code you've already seen many times so far (such as `support/race-condition/d/race_condition.d`).
+Assemble and run it a few times.
+Notice the different results you get.
+
+Now add the `lock` prefix before `inc` and `dec`.
+Reassemble and rerun the code.
+And now we have synchronised the two threads by leveraging CPU support.
+
+- TODO add this section to the lecture
