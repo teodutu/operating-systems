@@ -148,6 +148,9 @@ Do not worry about the huge list of arguments that `Popen()` takes.
 They are used for inter-process-communication.
 You'll learn more about this in the [Application Interaction chapter](../../app-interact/).
 
+Note that this usage of `Popen()` is not entirely correct.
+You'll discover why in the next exercise, but for now focus on simply understanding how to use `Popen()` on its own.
+
 Now change the command to anything you want.
 Also give it some arguments.
 From the outside, it's as if you were running these commands from the terminal.
@@ -620,7 +623,7 @@ D makes no exception.
 Its standard library exposes the [`std.parallelism`](https://dlang.org/phobos/std_parallelism.html), which provides a series of parallel processing functions.
 One such function is `reduce` which splits an array between a given number of threads and applies a given operation to these chunks.
 In our case, the operation simply adds the elements to an accumulator: `a + b`.
-Follow and run the code in `sum_array_threads_reduce.d`.
+Follow and run the code in `support/sum-array/d/sum_array_threads_reduce.d`.
 
 The number of threads is used within a [`TaskPool`](https://dlang.org/phobos/std_parallelism.html#.TaskPool).
 This structure is a thread manager (not scheduler).

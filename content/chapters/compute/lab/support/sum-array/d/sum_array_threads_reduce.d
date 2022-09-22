@@ -29,4 +29,5 @@ void main(string[] args)
     sw.stop();
 
     writeln("Array sum is: ", sumArr, "\nTime spent: ", sw.peek.total!"msecs", " ms");
+    taskPool.stop();
 }

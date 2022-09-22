@@ -41,7 +41,8 @@ int main(void)
 
 	switch (fork()) {
 		case -1:    /* Handle error */
-		DIE(1, "fork");
+			DIE(1, "fork");
+			break;
 
 		case 0:     /* Child process */
 			wait_for_input("3. Child process begins");
@@ -60,6 +61,8 @@ int main(void)
 		default:    /* Parent process */
 			break;
 	}
+
+	(void)value;
 
 	wait(&status);
 	wait_for_input("6. Parent process after waiting for child");

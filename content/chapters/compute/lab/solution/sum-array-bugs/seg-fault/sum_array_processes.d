@@ -87,10 +87,8 @@ void main(string[] args)
             writeln("Process ", i, " ended with exit code ",
                 WEXITSTATUS(status));
         else if (WIFSIGNALED(status))
-        {
             writeln("Process ", i, " was killed by signal ", WTERMSIG(status));
-            exit(2);
-        }
+
         sumArr += results[i];
     }
 

@@ -23,9 +23,6 @@ static char *stdin_file;
 static char *stdout_file;
 static char *stderr_file;
 
-static char *value;
-static char *var;
-
 static int type;
 
 

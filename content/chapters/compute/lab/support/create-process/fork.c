@@ -16,6 +16,7 @@ int main(void)
 	case -1:
 		/* `fork()` has encountered an error. */
 		DIE(1, "fork");
+		break;
 
 	case 0:
 		/* Child process */
