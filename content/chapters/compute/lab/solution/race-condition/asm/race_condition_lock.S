@@ -54,7 +54,6 @@ main:
 
 	; pthread_create(&tids[1], NULL, decrement_var, NULL)
 	lea rdi, [rsp + 8]
-	mov rdi, rsp
 	xor rsi, rsi
 	mov rdx, decrement_var
 	xor rcx, rcx

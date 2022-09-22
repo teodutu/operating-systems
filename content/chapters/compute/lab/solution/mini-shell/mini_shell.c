@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-// #include "utils.h"
+#include "utils.h"
 
 #define MAX_LINE_SIZE		256
 #define MAX_ARGS		8
@@ -22,9 +22,6 @@ static char **args;
 static char *stdin_file;
 static char *stdout_file;
 static char *stderr_file;
-
-static char *value;
-static char *var;
 
 static int type;
 
@@ -92,11 +89,13 @@ static void simple_cmd(char **args)
 	case -1:
 		/* Error */
 		DIE(1, "fork");
+		break;
 
 	case 0:
 		/* Child process */
 		execvp(args[0], (char *const *) args);
 		DIE(1, "execvp");
+		break;
 
 	default:
 		/* Parent process */

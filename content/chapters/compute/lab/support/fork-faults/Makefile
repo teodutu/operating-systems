@@ -1,2 +1,2 @@
 BINARY = fork_faults
-include ../../../../../common/makefile/single.uk
+include ../../../../../common/makefile/single.mk
