@@ -31,6 +31,7 @@ int main(void)
 		switch (pid) {
 		case -1:
 			DIE(1, "fork");
+			break;
 
 		case 0:
 			/* Child process */

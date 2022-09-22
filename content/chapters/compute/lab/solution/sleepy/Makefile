@@ -1,5 +1,5 @@
 BINARY = sleepy_creator
 include ../../../../../common/makefile/single.mk
 
-clean:
+clean::
 	-rm -f syscalls*
