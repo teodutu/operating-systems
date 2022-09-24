@@ -342,12 +342,6 @@ Note that in order for the processes to share the `sums` dictionary, it is not c
 This module provides some special data structures that are allocated in **shared memory** so that all processes can access them.
 You can learn more about shared memory and its various implementations [in the Arena section](#shared-memory).
 
-#### TODO: sum-array with "shared: `sum`
-
-- threads can modify it
-- processes can't
-- reference TLS and shared memory.
-
 ### Conclusion
 
 So far, you've probably seen that spawning a process can "use" a different program (hence the path in the args of `system` or `Popen`), but some languages such as Python allow you to spawn a process that executes a function from the same script.
@@ -447,11 +441,8 @@ You can learn more about it [its dedicated section in the Arena](#shared-memory)
 
 So far we've used threads and processes without wondering how to "tell" them how to access shared data.
 Moreover, in order to make threads wait for each other, we simply had the main thread wait for the others to finish all their work.
-But wat if we want one thread to wait until another one simply performs some specific action after which it resumes its execution?
+But what if we want one thread to wait until another one simply performs some specific action after which it resumes its execution?
 For this, we need to use some more complex synchronisation mechanisms.
-
-- TODO: add `__thread`
-- say that by default global vars are thread-specific in D (for safety)
 
 ### Race Conditions
 
@@ -559,6 +550,69 @@ So using the hardware support is more efficient, but it can only be leveraged fo
 ### Conditions
 
 - TODO
+
+### TLS
+
+First things first: what if we don't want data to be shared between threads?
+Are we condemned to have to worry about race conditions?
+Well, no.
+
+To protect data from race conditions "by design", we can place in what's called **Thread-Local Storage (TLS)**.
+As its name implies, this is a type of storage that is "owned" by individual threads, as opposed to being shared among all threads.
+**Do not confuse it with copy-on-write**.
+TLS pages are always duplicated when creating a new thread and their contents are re-initialised.
+
+#### Practice: D - TLS by Default
+
+Take a look again at `support/race-condition/d/race_condition.d`, specifically at how `var` is declared:
+
+```d
+__gshared int var;
+```
+
+Have you wondered what the `__gshared` keyword does?
+Well, for memory safety reasons, in D, all variables are by default **not shared** between threads.
+We need to specifically ask the language to let us share a variable between threads.
+We can do this using either the `__gshared` or `shared` keywords.
+You've seed `shared` in `support/race-condition/d/race_condition_atomic.d`.
+
+The difference between them is that `shared` only allows programmers read-modify-write the variable atomically, as we do in `support/race-condition/d/race_condition_atomic.d`.
+Modify the `incrementVar()` function and increment `var` like you would any variable: `var++`.
+Try to compile the code.
+It fails.
+The compiler is smart and tells you what to do instead:
+
+```
+Error: read-modify-write operations are not allowed for `shared` variables
+        Use `core.atomic.atomicOp!"+="(var, 1)` instead
+```
+
+`__gshared` is a rawer version of `shared`.
+It doesn't forbid anything.
+
+#### Practice: C - TLS on Demand
+
+The perspective of C towards TLS is opposed to that of D: in C/C++ everything is shared by default.
+This makes multithreading easier and more lightweight to implement than in D, because synchronisation is left entirely up to the developer, at the cost of potential unsafety.
+
+Of course we can specify that some data belongs to the TLS, by preceding the declaration of a variable with `__thread` keyword.
+First, compile and run the code in `support/race-condition/c/race_condition_tls.c` a few times.
+As expected, the result is different each time.
+
+1. Modify the declaration of `var` and add the `__thread` keyword to place the variable in the TLS of each thread.
+Recompile and run the code a few more times.
+You should see that in the end, `var` is 0.
+
+[Quiz 1](./quiz/tls-synchronization.md)
+
+[Quiz 2](./quiz/tls-var-copies.md)
+
+2. Print the address and value of `var` in each thread.
+See that they differ.
+
+3. Modify the value of `var` in the `main()` function before calling `pthread_create()`.
+Notice that the value doesn't propagate to the other threads.
+This is because, upon creating a new thread, its TLS is initialised. 
 
 ## Scheduling
 
@@ -792,3 +846,5 @@ Reassemble and rerun the code.
 And now we have synchronised the two threads by leveraging CPU support.
 
 - TODO add this section to the lecture
+
+### Read TLS from Another Thread
