@@ -492,6 +492,15 @@ If it was 0, the thread sets it to 1 and proceeds to execute the critical sectio
 Otherwise, it **suspends its execution** and waits until that variable is set to 0 again.
 
 When calling `unlock()`, the internal variable is set to 0 and all waiting threads are woken up to try to acquire the mutex again.
+**Be careful:** It is generally considered unsafe and [in many cases undefined behaviour](https://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_mutex_lock.html) to call `unlock()` from a different thread than the one that acquired the lock.
+So the general workflow should look something like this:
+
+```
+within a single thread:
+    mutex.lock()
+    // do atomic stuff
+    mutex.unlock()
+```
 
 #### Synchronisation - Overhead
 
@@ -545,13 +554,112 @@ It should be somewhere between `race_condition.d` and `race_condition_mutex.d`.
 
 So using the hardware support is more efficient, but it can only be leveraged for simple, individual instructions, such as loads and stores.
 
-### Semaphore
+### Semaphores
+
+Up to know we've learned how to create critical sections that can be accessed by **only one thread** at a time.
+These critical sections revolved around **data**.
+Whenever we define a critical section, there is some specific data to which we cannot allow parallel access.
+The reason why we can't allow it is, in general, data integrity, as we've seen in our examples in `support/race-condition/`
+
+But what if threads need to count?
+Counting is inherently thread-unsafe because it's a _read-modify-write_ operation.
+We read the counter, increment (modify) it and then write it back.
+Think about our example with [`apache2`](#usage-of-processes-and-threads-in-apache2)
+Let's say a `worker` has created a _pool_ of 3 threads.
+They are not doing any work initially;
+they are in the WAITING state.
+As clients initiate connections, these threads are picked up and are used to serve **at most 3** connections at a time.
+But the number of connections may be arbitrarily large.
+Therefore, we need a way to keep track of it.
+When serving a client, a thread should decrement it to inform the others that a connection has been finished.
+In short, we need a counter that the dispatcher increments and that worker threads decrement.
+
+Such a counter could be implemented using a **semaphore**.
+For simplicity's sake, you can view a semaphore as simply a mutex whose internal variable can take any value and acts like a counter.
+When a thread attempts to `acquire()` a semaphore, it will wait if this counter is less than or equal to 0.
+Otherwise, the thread **decrements** the internal counter and the function returns.
+The opposite of `acquire()` is `release()`, which increases the internal counter by a given value (by default 1).
+
+#### Practice: `apache2` Simulator - Semaphore
+
+Go to `support/apache2-simulator/apache2_simulator_semaphore.py`.
+In the `main()` function we create a semaphore which we increment (`release()`) upon every new message.
+Each thread decrements (`acquire()`) this semaphore to signal that it wants to retrieve a message from the list.
+The retrieval means modifying a data structure, which is a critical section, so we use a **separate** mutex for this.
+Otherwise, multiple threads could acquire the semaphore at the same time and try to modify the list at the same time.
+Not good.
+
+Locking this mutex (which in Python is called `Lock`) is done with the following statement: `with msg_mutex:`
+This is a syntactic equivalent to:
+
+```Python
+event.acquire()
+messages.append(msg)
+event.release()
+```
+
+[Quiz](./quiz/semaphore-equivalent.md)
+
+Since the length of the `messages` list is simply `len(messages)`, it may seem a bit redundant to use a semaphore to store essentially the same value.
+In the next section, we'll look at a more refined mechanism for our use case: _condition variables_.
 
 ### Conditions
 
-- TODO
+Another way we can implement our `apache2` simulator is to use a condition variable.
+This one is probably the most intuitive synchronisation primitive.
+It's a means by which a thread can tell another one: "Hey, wake up, _this_ happened!".
+So it's a way for threads to notify each other.
+For this reason, the main methods associated with conditions are `notify()` and `wait()`.
+As you might expect, they are complementary:
 
-### TLS
+- `wait()` puts the thread in the WAITING state until it's woken up by another one
+- `notify()` wakes up one or more `wait()`-ing threads.
+If `notify()` is called before any thread has called `wait()`, the first thread that calls it will continue its execution unhindered.
+
+#### Practice: `apache2` Simulator - Condition
+
+But this is not all, unfortunately.
+Look at the code in `support/apache2-simulator/apache2_simulator_condition.py`.
+See the main thread call notify once it reads the message.
+Notice that this call is within a `with event:` so it acquires some mutex / semaphore.
+
+`acquire()` and `release()` are commonly associated with mutexes or semaphores.
+What do they have to do with condition variables?
+
+Well, a lock `Condition` variable also stores an inner lock (mutex).
+It is this lock that we `acquire()` and `release()`.
+In fact, the [documentation](https://docs.python.org/3/library/threading.html#condition-objects) states we should only call `Condition` methods with its inner lock taken.
+
+Why is this necessary?
+Take a look at the `worker()` function.
+After `wait()`-ing (we'll explain the need for the loop in a bit), it extracts a message from the message queue.
+This operation is **not** atomic, so it must be enclosed within a critical section.
+Hence, the lock.
+
+[Quiz](./quiz/notify-only-with-mutex.md)
+
+So now we know we cannot only use a mutex.
+The mutex is used to access and modify the `messages` list atomically.
+Now you might be thinking that this code causes a deadlock:
+
+```Python
+with event:
+    while len(messages) == 0:
+        event.wait()
+```
+
+The thread gets the lock and then, if there are no messages, it switches its state to WAITING.
+A classic deadlock, right?
+No.
+`wait()` also releases the inner lock of the `Condition` and being woken up reacquires it.
+Neat!
+And the `while` loop that checks if there are any new messages is necessary because `wait()` can return after an arbitrary long time.
+Therefore, it's necessary to check for messages again when waking up.
+
+So now we have both synchronisation **and** signalling.
+This is what conditions are for, ultimately.
+
+## Thread-Local Storage (TLS)
 
 First things first: what if we don't want data to be shared between threads?
 Are we condemned to have to worry about race conditions?
@@ -846,5 +954,3 @@ Reassemble and rerun the code.
 And now we have synchronised the two threads by leveraging CPU support.
 
 - TODO add this section to the lecture
-
-### Read TLS from Another Thread
