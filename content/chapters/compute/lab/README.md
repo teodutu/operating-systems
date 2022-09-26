@@ -659,6 +659,10 @@ Therefore, it's necessary to check for messages again when waking up.
 So now we have both synchronisation **and** signalling.
 This is what conditions are for, ultimately.
 
+Now that you understand the concept of synchronisation, you should apply it in a broader context.
+[In the Arena](#synchronisation---thread-safe-data-structure), you'll find an exercise asking you to make an existing arraylist implementation thread-safe.
+Have fun!
+
 ## Thread-Local Storage (TLS)
 
 First things first: what if we don't want data to be shared between threads?
@@ -730,15 +734,6 @@ This is because, upon creating a new thread, its TLS is initialised.
 - https://github.com/bhaargav006/User-Thread-Library
 - https://github.com/kissen/threads
 - https://www.schaertl.me/posts/a-bare-bones-user-level-thread-library/
-
-### Cooperative Scheduling - Too Much
-
-- TODO: Unikraft.
-- practice: add prints, start threads, with and without `yielding`
-
-### Preemptive Scheduling - Too Much
-
-- D: TODO
 
 ## Arena
 
@@ -954,3 +949,15 @@ Reassemble and rerun the code.
 And now we have synchronised the two threads by leveraging CPU support.
 
 - TODO add this section to the lecture
+
+### Synchronisation - Thread-Safe Data Structure
+
+Now it's time for a fully practical exercise.
+Go to `support/CLIST/`.
+In the file `clist.c` you'll find a simple implementation of an array list.
+Although correct, it is not (yet) thread-safe.
+
+The code in `test.c` verifies its single-threaded correctness while the one in `test_parallel.c` verifies it works properly with multiple threads.
+Your task is to synchronise this data structure using whichever primitives you like.
+Try to keep the implementation efficient.
+Aim to decrease your running times as much as you can.
