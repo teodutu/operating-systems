@@ -96,16 +96,6 @@ static int init_remove_elem(size_t idx)
 	return 0;
 }
 
-static int init_even_replace_elem(size_t idx)
-{
-	return -(idx * 2); 
-}
-
-static int init_odd_replace_elem(size_t idx)
-{
-	return -(idx * 2 + 1); 
-}
-
 static void create_args(list_args_t *args, CList *l, int (*init_elem)(size_t))
 {
 	size_t i;
@@ -291,6 +281,7 @@ int main(void)
 	test_parallel_add_remove();
 	test_parallel_remove_remove();
 	test_parallel_replace_replace_different();
+	test_parallel_replace_replace_same();
 
 	return 0;
 }

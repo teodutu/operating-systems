@@ -1,1 +1,2 @@
-../../solution/create-process/Makefile
+BINARY = fork
+include ../../../../../common/makefile/single.mk

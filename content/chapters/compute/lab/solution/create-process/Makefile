@@ -1,2 +1,1 @@
-BINARY = fork
-include ../../../../../common/makefile/single.mk
+../../support/create-process/Makefile

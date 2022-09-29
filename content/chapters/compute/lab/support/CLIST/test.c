@@ -64,7 +64,7 @@ size_t diff_usec(struct timeval start, struct timeval end)
   return (1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec);
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
   void *obj = NULL;
   int i = 0;
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
   n = sizeof(sample);
   lst = CList_init(n);
 
-  printf("Size of struct 'sample' = %i bytes\n", sizeof(sample));
+  printf("Size of struct 'sample' = %zu bytes\n", sizeof(sample));
 
   n = 0;
   for (i = 0; i < 8; i++) /* Let create list of a struct */
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
   smpl = lst->firstMatch(lst, &longValue, shift, size, string);
   n = lst->index(lst);
 
-  printf("List item with index %i contains long long int \"%lli\"\n", n, smpl->u);
+  printf("List item with index %i contains long long int \"%lli\"\n", n, smpl->u.lli);
 
   /* Print struct member  */
 
@@ -239,12 +239,12 @@ int main(int argc, char **argv)
   /* If we want create list of objects located in diffent places of memory, */
   /* let create pointers list or in our case "uintptr_t" address list       */
 
-  printf("Size of 'uintptr_t' = %i bytes\n", sizeof(uintptr_t));
+  printf("Size of 'uintptr_t' = %zu bytes\n", sizeof(uintptr_t));
 
   n = sizeof(uintptr_t);
   lst = CList_init(n);
 
-  struct sample sm1 = { 64, 6.4, 4, "ABC company", 16, obj };
+  struct sample sm1 = { 64, 6.4, 4, "ABC company", { 16 }, obj };
   struct sample sm2 = { 128, 12.8, 8, "Discovery", { 1024 }, (void*)&sh }; /* Just some sample data */
 
   uintptr_t addr = (uintptr_t) &sm1;    /* Cast reference to address value */
@@ -298,7 +298,6 @@ int main(int argc, char **argv)
   lst = CList_init(n);
 
   size_t time;
-  int pos = 0;
   i = 0;
   n = 10000;
   struct timeval start;

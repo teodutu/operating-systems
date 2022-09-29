@@ -11,7 +11,6 @@ int main(void)
 	pid_t ret_pid;
 	pid_t pid;
 	int *p;
-	int rc;
 
 	/* TODO 1: Change the flags to disable copy-on-write. */
 	p = mmap(NULL, getpagesize(), PROT_READ | PROT_WRITE,

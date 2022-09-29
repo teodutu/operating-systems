@@ -1,2 +1,1 @@
-BINARIES = sum_array_processes
-include ../../../support/common/Makefile
+../../../support/sum-array-bugs/seg-fault/Makefile

@@ -76,6 +76,7 @@ static int parse_line(char *line)
  */
 static void simple_cmd(char **args)
 {
+	(void)args;
 	/**
 	 * TODO - Create a process to execute the command.
 	 * Use `execvp` to launch the new process.
