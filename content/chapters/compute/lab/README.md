@@ -80,13 +80,13 @@ exit_group(0)                           = ?
 Look at its parameters:
 - the path to the **program**: `/usr/bin/ls`
 - the list of arguments: `"ls", "-a"`
-- the enivronment variables: the rest of the syscall's arguments
+- the environment variables: the rest of the syscall's arguments
 
-`execve` invokes the loader to create the `ls` process.
+`execve` invokes the loader to load the VAS of the `ls` process **by replacing that of the existing process**.
 All subsequent syscalls are performed by the newly spawned `ls` process.
-We will get into more details regarding `execve` [towards the end of this lab](#TODO-section).
+We will get into more details regarding `execve` [towards the end of this lab](#first-step-system-dissected).
 
-TODO - image: creation of a process - loader
+![Loading of `ls` Process](./media/loading-of-ls-process.svg)
 
 ## Sum of the Elements in an Array
 
@@ -1215,7 +1215,7 @@ You'll get more accustomed to such functions in the [Application Interaction cha
 
 ### Mini-shell
 
-#### Fist Step: `system` Dissected
+#### First Step: `system` Dissected
 
 You already know that `system` calls `fork()` and `execve()` to create the new process.
 Let's see how and why.
