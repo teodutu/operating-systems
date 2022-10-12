@@ -2,24 +2,27 @@ from multiprocessing import Process
 from sys import argv
 from time import sleep
 
+
 def write_message_to_file(filename):
     sleep(1)
-    open(filename, 'w').write('Now you see me, now you don\'t\n')
+    open(filename, "w").write("Now you see me, now you don't\n")
+
 
 def main():
     if len(argv) < 2:
-        print(f'Usage: {argv[0]} <file_name>')
+        print(f"Usage: {argv[0]} <file_name>")
         return 1
 
     file_name = argv[1]
-    child = Process(target=write_message_to_file, args=(file_name, ))
+    child = Process(target=write_message_to_file, args=(file_name,))
     child.start()
 
     # TODO: Fix the `FileNotFoundError` raised below.
     child.join()
 
     file_content = open(file_name).read()
-    print(f'File content is: "{file_content}"')
+    print(f"File content is: '{file_content}'")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     exit(main())

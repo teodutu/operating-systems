@@ -38,7 +38,7 @@ int main(void)
 		/* Parent process */
 		printf("[parent] child PID = %d; current PID = %d\n", pid,
 			getpid());
-		
+
 		ret_pid = waitpid(pid, &status, 0);
 		DIE(ret_pid < 0, "waitpid parent");
 

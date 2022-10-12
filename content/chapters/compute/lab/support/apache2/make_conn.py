@@ -4,7 +4,7 @@ import sys
 NUM_CONNS = 100
 
 if len(sys.argv) != 3:
-    print('Usage: make_conn.py host port')
+    print("Usage: make_conn.py host port")
     exit()
 
 host = sys.argv[1]
@@ -17,8 +17,8 @@ for i in range(NUM_CONNS):
 
     s.connect((host, port))
 
-    s.send(b'A')
+    s.send(b"A")
 
     conns.append(s)
 
-input('Press ENTER to exit')
+input("Press ENTER to exit")

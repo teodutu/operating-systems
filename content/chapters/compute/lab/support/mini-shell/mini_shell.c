@@ -48,7 +48,7 @@ static int parse_line(char *line)
 
 	/* Normal command. */
 	delim = " \t\n";
-	token = strtok(line, delim);
+	token = strtok_r(line, delim);
 
 	if (token == NULL)
 		return ERROR;
@@ -64,7 +64,7 @@ static int parse_line(char *line)
 		}
 
 		args[idx++] = strdup(token);
-		token = strtok(NULL, delim);
+		token = strtok_r(NULL, delim);
 	}
 
 	args[idx++] = NULL;

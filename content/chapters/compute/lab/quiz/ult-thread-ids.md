@@ -2,7 +2,7 @@
 
 ## Question Text
 
-Why do the thread id's returned by `threads_create()` start from 2 and not 1?
+Why do the thread IDs returned by `threads_create()` start from 2 and not 1?
 Why is this necessary.
 
 ## Question Answers
