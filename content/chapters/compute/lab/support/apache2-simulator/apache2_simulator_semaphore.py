@@ -27,10 +27,10 @@ def worker(sem, id):
         # Notice we don't call `sem.release()`. The main thread does that.
 
 def main():
-    sem = Semaphore()
+    sem = Semaphore(0)
 
     # Create and start the worker threads.
-    thread_pool = [Thread(target=worker, args=(event, i))
+    thread_pool = [Thread(target=worker, args=(sem, i))
         for i in range(NUM_WORKERS)]
     for t in thread_pool:
         t.daemon = True

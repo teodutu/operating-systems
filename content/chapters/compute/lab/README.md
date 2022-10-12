@@ -901,7 +901,7 @@ By contrast, **user-level threads (ULT)** are managed by the user space.
 More of the ULTs created by a program are generally mapped to the same kernel thread.
 If a process only creates ULTs, then they will all be mapped to the single, main kernel thread of the process.
 So if we cannot run code in parallel with ULTs, then why use them?
-Well, for I/O-intensive programs (those that do lots of network calls or file operations like reads and writes - web servers are a good example), threads are expected to perform lots of blocking calls, which causes context switches.
+Well, programs that create many context switches may suffer from the larger overhead if they use kernel-level threads.
 In such cases, user-level threads may be useful as context switches bring less overhead between user-level threads.
 
 ### Practice: User-Level Threads Scheduler
@@ -1349,8 +1349,6 @@ Notice the different results you get.
 Now add the `lock` prefix before `inc` and `dec`.
 Reassemble and rerun the code.
 And now we have synchronised the two threads by leveraging CPU support.
-
-- TODO add this section to the lecture
 
 ### Synchronisation - Thread-Safe Data Structure
 
