@@ -1,7 +1,7 @@
 ## Benchmarks
 
 The main criterion we use to rank CPUs is their _computation power_, i.e. their ability to crunch numbers and do math.
-Numerous benchmarks exist out there and they are publicly displayed on websites such as [CPUBenchmark](https://www.cpubenchmark.net/).
+Numerous benchmarks exist out there and they are publicly displayed on sites such as [CPUBenchmark](https://www.cpubenchmark.net/).
 
 This benchmark measures the performance of the computer's CPU in a variety of scenarios:
 - its ability to perform integer operations

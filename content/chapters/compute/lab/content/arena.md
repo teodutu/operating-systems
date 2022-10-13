@@ -114,11 +114,11 @@ execve("/usr/bin/sleep", ["sleep", "10"], 0x560f41659d40 /* 38 vars */) = 0
 
 Now notice that the child process doesn't simply call `execve("/usr/bin/sleep" ...)`.
 It first changes its virtual address space (VAS) to that of a `bash` process (`execve("/bin/sh" ...)`) and then that `bash` process switches its VAS to `sleep`.
-Therefore, calling `system(<some_command>)` is equivalent to running `<some_command>` in the command line.
+Therefore, calling `system(<some_command>)` is equivalent to running `<some_command>` in the command-line.
 
 With this knowledge in mind, let's implement our own mini-shell.
 Start from the skeleton code in `support/mini-shell/mini_shell.c`.
-We're already running our Bash interpreter from the command line, so there's no need to `exec` another Bash from it.
+We're already running our Bash interpreter from the command-line, so there's no need to `exec` another Bash from it.
 Simply `exec` the command.
 
 [Quiz](../quiz/mini-shell-stops-after-command.md)
