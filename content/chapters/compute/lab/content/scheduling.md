@@ -183,9 +183,9 @@ Notice that the threads run their code and alternatively, because their prints a
 
 [Quiz](../quiz/ult-thread-ids.md)
 
-### Preemption
+### Scheduling - How is it done?
 
-All schedulers can be split into two categoriesThere are two types of schedulers: **preemptive** and **cooperative**.
+There are two types of schedulers: **preemptive** and **cooperative**.
 When discussing this distinction, we need to first define the notion of **yielding**.
 Yielding the CPU means that a thread suspends its own execution and enters the WAITING or READY state, either as a result of a blocking call (I/O operations or calling the scheduler's `yield()` function directly).
 So, yielding the CPU triggers a context switch whereby the current thread stops running and another one resumes or starts running in its place.

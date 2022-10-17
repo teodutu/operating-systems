@@ -37,7 +37,7 @@ Look at its parameters:
 All subsequent syscalls are performed by the newly spawned `ls` process.
 We will get into more details regarding `execve` [towards the end of this lab](./arena.md#first-step-system-dissected).
 
-![Loading of `ls` Process](./media/loading-of-ls-process.svg)
+![Loading of `ls` Process](../media/loading-of-ls-process.svg)
 
 ### Sum of the Elements in an Array
 
@@ -69,9 +69,9 @@ CPU(s):                          8
 ```
 We have 7 more cores waiting to add numbers in our array.
 
-![What if we used 100% of the CPU?](./media/100-percent-cpu.jpeg)
+![What if we used 100% of the CPU?](../media/100-percent-cpu.jpeg)
 
-What if we use 7 more processes between which we spread the task of adding the numbers in this array?
+What if we use 7 more processes and spread the task of adding the numbers in this array between them?
 If we split the array into several equal parts and designate a separate process to calculate the sum of each part, we should get a speedup because now the work performed by each individual process is reduced.
 
 Let's take it methodically.
@@ -96,7 +96,7 @@ So by consequence and by forcing the terminology (because it's the main thread o
 Run the code in `support/create-process/popen.py`.
 It simply spawns a new process running the `ls` command using [`subprocess.Popen()`](https://docs.python.org/3/library/subprocess.html#subprocess.Popen).
 Do not worry about the huge list of arguments that `Popen()` takes.
-They are used for inter-process-communication.
+They are used for **inter-process-communication**.
 You'll learn more about this in the [Application Interaction chapter](../../../app-interact/).
 
 Note that this usage of `Popen()` is not entirely correct.

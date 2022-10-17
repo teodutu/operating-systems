@@ -2,10 +2,10 @@
 
 So far you know that the parent and child process have separate virtual address spaces.
 But how are they created, namely how are they "separated"?
-And what about the **physical address space**?
+And what about the **PAS (physical address space)**?
 Of course we would like the stack of the parent, for example, to be physically distinct from that of the child so they can execute different functions and use different local variables.
 
-But should **all** the PAS of the parent be distinct from that of the child?
+But should **all** memory sections from the PAS of the parent be distinct from that of the child?
 What about some read-only memory sections, such as `.text` and `.rodata`?
 And what about the heap, where the child _may_ use some data previously written by the parent and then override it with its own data.
 
@@ -28,9 +28,9 @@ Then the process' page table points the page to the newly copied frame, as you c
 ![Copy-on-Write](../../lecture/media/copy-on-write-final.svg)
 
 **Be careful!**
-Do not confuse copy-on-write with demand paging.
-Remember from the [Data chapter](../../../data/) that demand paging means that when you allocate memory the OS allocates virtual memory that remains unmapped to physical memory until it's used.
-On the other hand, copy-on-write posits that the virtual memory is already mapped to some frames.
+Do not confuse **copy-on-write** with **demand paging**.
+Remember from the [Data chapter](../../../data/) that **demand paging** means that when you allocate memory the OS allocates virtual memory that remains unmapped to physical memory until it's used.
+On the other hand, **copy-on-write** posits that the virtual memory is already mapped to some frames.
 These frames are only duplicated when one of the processes attempts to write data to them.
 
 #### Practice

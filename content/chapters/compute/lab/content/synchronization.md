@@ -79,7 +79,7 @@ This latter overhead comes from the **context switch**s that is necessary for a 
 #### Practice: Wrap the Whole `for` Statements in Critical Sections
 
 Move the calls to `lock()` and `unlock()` outside the `for` statements so that the critical sections become the entire statement.
-Measure the time spent now by the code and compare it with the times recorded when the critical sections were made up of only `var--` and `var++`.
+Measure the time spent now by the code and compare it with the execution times recorded when the critical sections were made up of only `var--` and `var++`.
 
 [Quiz](../quiz/coarse-vs-granular-critical-section.md)
 
@@ -182,7 +182,7 @@ If `notify()` is called before any thread has called `wait()`, the first thread 
 But this is not all, unfortunately.
 Look at the code in `support/apache2-simulator/apache2_simulator_condition.py`.
 See the main thread call notify once it reads the message.
-Notice that this call is within a `with event:` so it acquires some mutex / semaphore.
+Notice that this call is within a `with event`: so it acquires some mutex / semaphore.
 
 `acquire()` and `release()` are commonly associated with mutexes or semaphores.
 What do they have to do with condition variables?
