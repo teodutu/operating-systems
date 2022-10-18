@@ -1,9 +1,9 @@
-## Synchronisation
+## Synchronization
 
 So far we've used threads and processes without wondering how to "tell" them how to access shared data.
 Moreover, in order to make threads wait for each other, we simply had the main thread wait for the others to finish all their work.
 But what if we want one thread to wait until another one simply performs some specific action after which it resumes its execution?
-For this, we need to use some more complex synchronisation mechanisms.
+For this, we need to use some more complex synchronization mechanisms.
 
 ### Race Conditions
 
@@ -63,12 +63,12 @@ within a single thread:
     mutex.unlock()
 ```
 
-#### Synchronisation - Overhead
+#### Synchronization - Overhead
 
 > There ain't no such thing as a free lunch
 
 This saying is also true for multithreading.
-Running threads in parallel is nice and efficient, but synchronisation always comes with a penalty: overhead.
+Running threads in parallel is nice and efficient, but synchronization always comes with a penalty: overhead.
 Use the `time` command to record the running times of `race_condition` and `race_condition_mutex`.
 Notice that those of `race_condition_mutex` are larger than those of `race_condition`.
 
@@ -167,7 +167,7 @@ In the next section, we'll look at a more refined mechanism for our use case: _c
 ### Conditions
 
 Another way we can implement our `apache2` simulator is to use a condition variable.
-This one is probably the most intuitive synchronisation primitive.
+This one is probably the most intuitive synchronization primitive.
 It's a means by which a thread can tell another one: "Hey, wake up, _this_ happened!".
 So it's a way for threads to notify each other.
 For this reason, the main methods associated with conditions are `notify()` and `wait()`.
@@ -217,11 +217,11 @@ Neat!
 And the `while` loop that checks if there are any new messages is necessary because `wait()` can return after an arbitrary long time.
 Therefore, it's necessary to check for messages again when waking up.
 
-So now we have both synchronisation **and** signalling.
+So now we have both synchronization **and** signalling.
 This is what conditions are for, ultimately.
 
-Now that you understand the concept of synchronisation, you should apply it in a broader context.
-[In the Arena](./arena.md#synchronisation---thread-safe-data-structure), you'll find an exercise asking you to make an existing arraylist implementation thread-safe.
+Now that you understand the concept of synchronization, you should apply it in a broader context.
+[In the Arena](./arena.md#synchronization---thread-safe-data-structure), you'll find an exercise asking you to make an existing arraylist implementation thread-safe.
 Have fun!
 
 ### Thread-Local Storage (TLS)
@@ -266,7 +266,7 @@ It doesn't forbid anything.
 #### Practice: C - TLS on Demand
 
 The perspective of C towards TLS is opposed to that of D: in C/C++ everything is shared by default.
-This makes multithreading easier and more lightweight to implement than in D, because synchronisation is left entirely up to the developer, at the cost of potential unsafety.
+This makes multithreading easier and more lightweight to implement than in D, because synchronization is left entirely up to the developer, at the cost of potential unsafety.
 
 Of course we can specify that some data belongs to the TLS, by preceding the declaration of a variable with `__thread` keyword.
 First, compile and run the code in `support/race-condition/c/race_condition_tls.c` a few times.

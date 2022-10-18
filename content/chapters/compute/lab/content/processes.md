@@ -148,11 +148,11 @@ What's going on?
 
 [Quiz](../quiz/cause-of-file-not-found-error.md)
 
-In order to solve race conditions, we need **synchronisation**.
+In order to solve race conditions, we need **synchronization**.
 This is a mechanism similar to a set of traffic lights in a crossroads.
-Just like traffic lights allow some cars to pass only after others have already passed, synchronisation is a means for threads to communicate with each other and tell each other to access a resource or not.
+Just like traffic lights allow some cars to pass only after others have already passed, synchronization is a means for threads to communicate with each other and tell each other to access a resource or not.
 
-The most basic form of synchronisation is **waiting**.
+The most basic form of synchronization is **waiting**.
 Concretely, if the parent process **waits** for the child to end, we are sure the file is created and its contents are written.
 Use `join()` to make the parent wait for its child before reading the file.
 

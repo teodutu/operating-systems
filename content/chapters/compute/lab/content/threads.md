@@ -22,13 +22,13 @@ This is precisely the nondeterminism that we talked about [in the previous secti
 
 Now wait for that thread to finish and see that all the printed numbers are consistently negative.
 
-As you can see, waiting is a very coarse form of synchronisation.
+As you can see, waiting is a very coarse form of synchronization.
 If we only use waiting, we can expect no speedup as a result of parallelism, because one thread must finish completely before another can continue.
-We will discuss more fine-grained synchronisation mechanisms [later in this lab](./synchronisation.md).
+We will discuss more fine-grained synchronization mechanisms [later in this lab](./synchronization.md).
 
 Also, at this point, you might be wondering why this exercise is written in D, while [the same exercise, but with processes](./processes.md#practice-wait-for-me) was written in Python.
 There is a very good reason for this and has to do with how threads are synchronized by default in Python.
-You can find out what this is about [in the Arena section](./arena.md#the-gil), after you have completed the [Synchronisation section](./synchronisation.md).
+You can find out what this is about [in the Arena section](./arena.md#the-gil), after you have completed the [Synchronization section](./synchronization.md).
 
 ### Threads vs Processes
 

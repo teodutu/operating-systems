@@ -213,9 +213,9 @@ Notice the different results you get.
 
 Now add the `lock` prefix before `inc` and `dec`.
 Reassemble and rerun the code.
-And now we have synchronised the two threads by leveraging CPU support.
+And now we have synchronized the two threads by leveraging CPU support.
 
-### Synchronisation - Thread-Safe Data Structure
+### Synchronization - Thread-Safe Data Structure
 
 Now it's time for a fully practical exercise.
 Go to `support/CLIST/`.
@@ -223,6 +223,6 @@ In the file `clist.c` you'll find a simple implementation of an array list.
 Although correct, it is not (yet) thread-safe.
 
 The code in `test.c` verifies its single-threaded correctness while the one in `test_parallel.c` verifies it works properly with multiple threads.
-Your task is to synchronise this data structure using whichever primitives you like.
+Your task is to synchronize this data structure using whichever primitives you like.
 Try to keep the implementation efficient.
 Aim to decrease your running times as much as you can.

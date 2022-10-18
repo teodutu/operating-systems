@@ -155,7 +155,7 @@ Then check the `strace` output to see what files were opened by the server.
 So far, you've probably seen that spawning a process can "use" a different program (hence the path in the args of `system` or `Popen`), but some languages such as Python allow you to spawn a process that executes a function from the same script.
 A thread, however, can only start from a certain entry point **within the current address space**, as it is bound to the same process.
 Concretely, a process is but a group of threads.
-For this reason, when we talk about scheduling or synchronisation, we talk about threads.
+For this reason, when we talk about scheduling or synchronization, we talk about threads.
 A thread is, thus, an abstraction of a task running on a CPU core.
 A process is a logical group of such tasks.
 
