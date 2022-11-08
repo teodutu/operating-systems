@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "utils.h"
 
@@ -16,28 +16,26 @@ int main(void)
 	int rc;
 	int exit_code;
 
+	fork();
+	fork();
 	pid = fork();
 	switch (pid) {
 	case -1:	/* Error */
 		DIE(1, "fork");
 		break;
 
-	case 0:		/* Child process */
+	case 0: 	/* Child process */
+		sleep(1);
 		printf("[child] PID = %d; PPID = %d\n", getpid(), getppid());
 
-		sleep(5);
-		return 42;
+		break;
 
-	default:	/* Parent process */
-		printf("[parent] PID = %d; child PID = %d; Waiting...\n",
-			getpid(), pid);
+	default: 	/* Parent process */
+		printf("[parent] PID = %d; child PID = %d; Waiting...\n", getpid(), pid);
 
 		rc = waitpid(pid, &exit_code, 0);
 		DIE(rc < 0, "waitpid");
 
-		if (WIFEXITED(exit_code))
-			printf("[parent] Child exited with code %d\n",
-				WEXITSTATUS(exit_code));
 		break;
 	}
 
