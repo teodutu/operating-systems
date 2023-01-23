@@ -29,7 +29,7 @@ function createLabelsForPR(github, context) {
     })
 }
 
-function addLabelsToPR(github, labels) {
+function addLabelsToPR(github, context, labels) {
     github.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
         owner: context.repo.owner,
         repo: context.repo.repo,
