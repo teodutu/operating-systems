@@ -1,8 +1,9 @@
 name: "Pull Request Labeler"
-on: pull_request
+on:
+  pull_request
 
 jobs:
-  Add topic area labels:
+  triage:
     permissions:
       contents: read
       pull-requests: write
@@ -12,16 +13,13 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true
-  Add kind labels:
+  add-kind-labels:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
       - uses: actions/checkout@v2
       - uses: actions/github-script@v6
         with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
           script: |
-            console.log(context)
             const { default: addLabelsToPR } = await import('${{ github.workspace }}/.github/scripts/add-labels.js') ;
             await addLabelsToPR({github, context})
