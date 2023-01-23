@@ -24,4 +24,4 @@ area/code:
   - any: ['**/lab/support/**/*', '**/lab/solution/**/*', '**/lecture/demo/**/*']
 
 area/infra:
-  - all: ['!content/chapters/**/*']
+  - '!content/chapters/**/*'

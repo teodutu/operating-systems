@@ -27,6 +27,8 @@ student@so:~/.../lab/support/app-investigate$ find /usr/bin /bin /usr/sbin /sbin
 [...]
 ```
 
+
+
 As above, the output will differ between systems.
 
 So, depending on the developers' choice, applications may be:
