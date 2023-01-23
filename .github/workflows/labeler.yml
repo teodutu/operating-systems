@@ -21,5 +21,6 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
+            console.log(context)
             const { default: addLabelsToPR } = await import('${{ github.workspace }}/.github/scripts/add-labels.js') ;
             await addLabelsToPR({github, context})
