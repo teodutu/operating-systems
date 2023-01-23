@@ -1,8 +1,9 @@
 name: "Pull Request Labeler"
-on: pull_request
+on: [pull_request]
 
 jobs:
-  Add topic and area labels:
+  add-topic-area-labels:
+    name: Add topic and area labels
     permissions:
       contents: read
       pull-requests: write
@@ -12,7 +13,8 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         sync-labels: true
-  Add kind labels:
+  add-kind-labels:
+    name: Add kind labels
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
