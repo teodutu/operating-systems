@@ -14,7 +14,8 @@ jobs:
       - run: |
           cd repo
           ls
-          sed -i "s/baseUrl: \/operating-systems\//baseUrl: \/operating-systems\/${{ github.sha }}\//" config.yaml
+          REF=$(echo "refs/pull/8/merge" | sed 's/\//\\\//g')
+          sed -i "s/baseUrl: \/operating-systems\//baseUrl: \/operating-systems\/$REF\//" config.yaml
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
