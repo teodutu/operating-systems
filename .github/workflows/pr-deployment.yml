@@ -15,7 +15,7 @@ jobs:
           path: ./repo
       - run: |
           cd repo
-          REF=$(echo "refs/pull/8/merge" | sed 's/\//\\\//g')
+          REF=$(echo ${{ github.ref }} | sed 's/\//\\\//g')
           sed -i "s/baseUrl: \/operating-systems\//baseUrl: \/operating-systems\/$REF\//" config.yaml
 
       - name: Set up Docker Buildx
