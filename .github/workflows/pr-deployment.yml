@@ -32,8 +32,8 @@ jobs:
 
       - name: Load image
         run: |
-          echo '$GITHUB_SHA'
-          mkdir '$GITHUB_SHA'
+          echo $GITHUB_SHA
+          mkdir $GITHUB_SHA
           docker image list
           docker run -v $GITHUB_WORKSPACE/repo:/content -v $GITHUB_WORKSPACE/$GITHUB_SHA:/output operating-systems/docusaurus:latest
 
@@ -56,7 +56,7 @@ jobs:
         with:
           personal_token: ${{ secrets.API_TOKEN_GITHUB }}
           # Build output to publish to the `gh-pages-pr` branch:
-          publish_dir: ./'$GITHUB_SHA'
+          publish_dir: ./$GITHUB_SHA
           keep_files: true
           external_repository: open-education-hub/operating-systems
           # The following lines assign commit authorship to the official
