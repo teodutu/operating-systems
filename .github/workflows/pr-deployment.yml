@@ -14,7 +14,7 @@ jobs:
       - run: |
           cd repo
           ls
-          sed -i 's/baseUrl: \/operating-systems\//baseUrl: \/operating-systems\/${{ github.sha }}\//' config.yaml
+          sed -i 's/baseUrl: \/operating-systems\//baseUrl: \/operating-systems\/$GITHUB_SHA\//' config.yaml
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -32,17 +32,17 @@ jobs:
 
       - name: Load image
         run: |
-          mkdir ${{ github.sha }}
+          mkdir $GITHUB_SHA
           docker image list
-          docker run -v $GITHUB_WORKSPACE/repo:/content -v $GITHUB_WORKSPACE/${{ github.sha }}:/output operating-systems/docusaurus:latest
+          docker run -v $GITHUB_WORKSPACE/repo:/content -v $GITHUB_WORKSPACE/$GITHUB_SHA:/output operating-systems/docusaurus:latest
 
       - name: Push to Upstream Repository
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: ${{ github.sha }}
-          target-directory: ${{ github.sha }}
+          source-directory: $GITHUB_SHA
+          target-directory: $GITHUB_SHA
           destination-github-username: 'open-education-hub'
           destination-repository-name: 'operating-systems'
           user-email: 'github-actions[bot]@users.noreply.github.com'
@@ -55,7 +55,7 @@ jobs:
         with:
           personal_token: ${{ secrets.API_TOKEN_GITHUB }}
           # Build output to publish to the `gh-pages-pr` branch:
-          publish_dir: ./${{ github.sha }}
+          publish_dir: ./$GITHUB_SHA
           keep_files: true
           external_repository: open-education-hub/operating-systems
           # The following lines assign commit authorship to the official
@@ -77,4 +77,4 @@ jobs:
             -u $GITHUB_TOKEN \
             $URL \
             -H "Content-Type: application/json" \
-            --data '{ "body": "Published at http://open-education-hub.github.io/${{ github.sha }}" }'
+            --data '{ "body": "Published at http://open-education-hub.github.io/$GITHUB_SHA" }'
