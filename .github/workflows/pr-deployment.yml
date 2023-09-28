@@ -55,7 +55,7 @@ jobs:
       #   with:
       #     personal_token: ${{ secrets.API_TOKEN_GITHUB }}
       #     # Build output to publish to the `gh-pages-pr` branch:
-      #     publish_dir: ../../../${{ github.sha }}
+      #     publish_dir: ./${{ github.sha }}
       #     keep_files: true
       #     external_repository: open-education-hub/operating-systems
       #     # The following lines assign commit authorship to the official
