@@ -42,8 +42,8 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source-directory: '$GITHUB_SHA'
-          target-directory: '$GITHUB_SHA'
+          source-directory: $GITHUB_SHA
+          target-directory: $GITHUB_SHA
           destination-github-username: 'open-education-hub'
           destination-repository-name: 'operating-systems'
           user-email: 'github-actions[bot]@users.noreply.github.com'
