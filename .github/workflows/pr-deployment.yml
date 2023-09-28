@@ -1,6 +1,7 @@
 name: OpenEduHub - PR Test Deployment
 
 on:
+  push:
   pull_request:
 
 jobs:
