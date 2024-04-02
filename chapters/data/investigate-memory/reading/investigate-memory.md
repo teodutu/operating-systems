@@ -2,9 +2,9 @@
 
 Memory actions generally mean:
 
-* memory access: read, write or execute
-* memory allocation
-* memory deallocation
+- memory access: read, write or execute
+- memory allocation
+- memory deallocation
 
 By far, the most important actions are allocation and deallocation.
 Because, if not done right, these can get to memory loss and poor memory use.
@@ -20,8 +20,8 @@ And then it's pointing to a new memory area and the old memory area is lost.
 Enter the `support/memory-leak/` folder.
 It stores two files showing memory leaks:
 
-* one in C++: `memory_leak.cpp`
-* one in C: `memory_leak_malloc`
+- one in C++: `memory_leak.cpp`
+- one in C: `memory_leak_malloc`
 
 Let's build and run the two executables:
 
@@ -236,7 +236,7 @@ student@os:~$ ltrace -x "*"
 
 [Quiz](../quiz/memory-leaks.md)
 
-## jemalloc
+## `jemalloc`
 
 [jemalloc](http://jemalloc.net/) is a featureful allocator that is intended to replace the standard allocator in the standard C library (libc).
 jemalloc provides replacements for the general `malloc()` and `free()` functions, and also provides a custom API targeted for performance tuning.
@@ -304,7 +304,7 @@ student@os:~/.../lab/support/memory-leak$ LD_PRELOAD=/usr/lib/x86_64-linux-gnu/l
 26732 pts/22   00:00:01 bash
 ```
 
-## malloc in Musl
+## `malloc()` in Musl
 
 Each libc (or memory allocator such as `jemalloc`) uses their own implementation of `malloc()`, `free()` and other functions.
 [Musl libc](https://musl.libc.org/) is a lightweight standard C library that provides compatible features with the more heavyweights [GNU libc](https://www.gnu.org/software/libc/).
@@ -399,11 +399,11 @@ In `lib.rs`, in [`GlobalAlloc:alloc()`](https://github.com/servo/servo/blob/mast
 See [the initialization of `ffi`](https://github.com/servo/servo/blob/master/components/allocator/lib.rs#L17).
 
 See the use of the allocator in the [`Cargo.toml` file in the `net` component](https://github.com/servo/servo/blob/master/components/net/Cargo.toml).
-Search for the _alloc_ string.
+Search for the `alloc` string.
 
 ### Practice
 
-1. Look for uses of the allocator in other components of Servo.
+Look for uses of the allocator in other components of Servo.
 
 ## Investigation: Alocator in the D Programming Language
 
@@ -442,7 +442,7 @@ Browse the functions and look for implementations of the `allocate()` function.
 
 ### Practice
 
-1. Do a similar search and then source code browsing for the `deallocate()` function.
+Do a similar search and then source code browsing for the `deallocate()` function.
 
 ## App Investigation: Git
 
@@ -509,7 +509,7 @@ We can look into the [`merge-recursive.c` file](https://github.com/git/git/blob/
 
 ### Practice
 
-1. Do the same actions as above for the `mmap()` and `xmmap()` function calls.
+Do the same actions as above for the `mmap()` and `xmmap()` function calls.
 
-   Note that these are not memory allocation calls, since a valid `fd` file argument is passed.
-   These are file mapping calls, that we will talk more as part of the I/O chapter.
+Note that these are not memory allocation calls, since a valid `fd` file argument is passed.
+These are file mapping calls, that we will talk more as part of the I/O chapter.
